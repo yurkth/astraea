@@ -39,3 +39,72 @@ function pGet(x, y) {
     const a = px.pixels[index + 3]
     return color(r, g, b, a)
 }
+
+class Grid {
+    #table
+    constructor(width, height, init) {
+        this.width = width
+        this.height = height
+        this.#table = new Array(this.width * this.height).fill(init)
+    }
+    set(x, y, val) {
+        if (x < 0 || this.width <= x) {
+            throw new RangeError(`The argument must be between x ${0} and ${this.width - 1}.`)
+        } else if (y < 0 || this.height <= y) {
+            throw new RangeError(`The argument must be between y ${0} and ${this.height - 1}.`)
+        } else {
+            this.#table[y * this.width + x] = val
+        }
+    }
+    get(x, y) {
+        if (0 <= x && x < this.width && 0 <= y && y < this.height) {
+            return this.#table[y * this.width + x]
+        } else {
+            return undefined
+        }
+    }
+}
+
+class PixelSphere {
+    #sphereWidth
+    constructor(diameter) {
+        this.diameter = diameter
+        this.#sphereWidth = this._getSphereWidth()
+    }
+
+    _getSphereWidth() {
+        // Reference: https://github.com/nesbox/TIC-80/blob/master/src/tic.c#L948-L961
+        let sphereWidth = []
+        const parity = 1 - this.diameter % 2
+        let r = Math.floor(this.diameter / 2) - parity
+        let y = -r
+        let x = 0
+        let d = 2 - 2 * r
+
+        do {
+            r = d
+            if (r > y || d > x) {
+                sphereWidth.push(x * 2 + 1 + parity)
+                d += ++y * 2 + 1
+            }
+            if (r <= x) {
+                d += ++x * 2 + 1
+            }
+        } while (y <= 0)
+        return sphereWidth
+    }
+
+    getWidth(y) {
+        if (y < 0 || this.diameter <= y) {
+            throw new RangeError(`The argument must be between ${0} and ${this.diameter - 1}.`)
+        }
+
+        let index
+        if (y < Math.floor(this.diameter / 2) + this.diameter % 2) {
+            index = y
+        } else {
+            index = this.diameter - y - 1
+        }
+        return this.#sphereWidth[index]
+    }
+}
