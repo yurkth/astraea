@@ -40,6 +40,17 @@ function pGet(x, y) {
     return color(r, g, b, a)
 }
 
+const pi2 = Math.PI * 2
+function sphereNoise(x, y, noiseScale, off = 0) {
+    const r = ps.grid.width / pi2
+    const phi = x / ps.grid.width * pi2
+    const theta = y / ps.grid.height * Math.PI
+    const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + off * 2)
+    const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + off * 2)
+    const nz = r * (Math.cos(theta) + 1 + off * 2)
+    return Math.floor(noise(nx * noiseScale, ny * noiseScale, nz * noiseScale) * 360)
+}
+
 class Grid {
     #table
     constructor(width, height, init) {
@@ -69,6 +80,7 @@ class PixelSphere {
     #sphereWidth
     constructor(diameter) {
         this.diameter = diameter
+        this.grid = new Grid(this.diameter * 2, this.diameter, 0)
         this.#sphereWidth = this._getSphereWidth()
     }
 
@@ -94,7 +106,7 @@ class PixelSphere {
         return sphereWidth
     }
 
-    getWidth(y) {
+    _getWidth(y) {
         if (y < 0 || this.diameter <= y) {
             throw new RangeError(`The argument must be between ${0} and ${this.diameter - 1}.`)
         }
@@ -106,5 +118,24 @@ class PixelSphere {
             index = this.diameter - y - 1
         }
         return this.#sphereWidth[index]
+    }
+
+    drawPlane(offX = 0, offY = 0) {
+        for (let x = 0; x < ps.grid.width; x++) {
+            const gx = (x + frameCount) % ps.grid.width
+            for (let y = 0; y < ps.grid.height; y++) {
+                pSet(x + offX, y + offY, ps.grid.get(gx, y))
+            }
+        }
+    }
+
+    drawSphere(offX = 0, offY = 0) {
+        for (let y = 0; y < ps.diameter; y++) {
+            const sw = ps._getWidth(y)
+            for (let x = 0; x < sw; x++) {
+                const gx = (Math.floor((x / sw + 0.5) * ps.diameter) + frameCount) % ps.grid.width
+                pSet(x + offX - sw / 2, y + offY, ps.grid.get(gx, y))
+            }
+        }
     }
 }
