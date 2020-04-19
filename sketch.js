@@ -9,7 +9,8 @@ let p8Font
 let ps = new PixelSphere(size)
 
 function preload() {
-    p8Font = loadFont("PICO-8_mono_upper.ttf") // https://www.lexaloffle.com/bbs/?tid=3760
+    // https://www.lexaloffle.com/bbs/?tid=3760
+    p8Font = loadFont("PICO-8_mono_upper.ttf")
 }
 
 function setup() {
@@ -29,9 +30,8 @@ function setup() {
     const noiseScale = 0.6 / Math.sqrt(size)
     for (let x = 0; x < ps.grid.width; x++) {
         for (let y = 0; y < ps.grid.height; y++) {
-            //ps.grid.set(x, y, Math.floor(x / ps.grid.width * 360))
             const n = sphereNoise(x, y, noiseScale, 0)
-            const hue = Math.floor(n * 360)
+            const hue = Math.floor(n * 360) // Math.floor(x / ps.grid.width * 360)
             ps.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
         }
     }

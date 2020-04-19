@@ -40,6 +40,8 @@ function pGet(x, y) {
     return color(r, g, b, a)
 }
 
+function mod(a, b) { return (a % b + b) % b }
+
 const pi2 = Math.PI * 2
 function sphereNoise(x, y, noiseScale, off = 0) {
     const r = ps.grid.width / pi2
@@ -68,20 +70,23 @@ class Grid {
         }
     }
     get(x, y) {
-        if (0 <= x && x < this.width && 0 <= y && y < this.height) {
-            return this.#table[y * this.width + x]
-        } else {
-            return undefined
+        if (x < 0 || this.width <= x) {
+            x = mod(x, this.width)
         }
+        if (y < 0 || this.height <= y) {
+            y = mod(y, this.height)
+        }
+        return this.#table[y * this.width + x]
     }
 }
 
 class PixelSphere {
     #sphereWidth
-    constructor(diameter) {
+    constructor(diameter, speed = 1) {
         this.diameter = diameter
         this.grid = new Grid(this.diameter * 2, this.diameter, 0)
         this.#sphereWidth = this._getSphereWidth()
+        this.speed = speed
     }
 
     _getSphereWidth() {
@@ -122,7 +127,7 @@ class PixelSphere {
 
     drawPlane(offX = 0, offY = 0) {
         for (let x = 0; x < ps.grid.width; x++) {
-            const gx = (x + frameCount) % ps.grid.width
+            const gx = Math.floor(x - frameCount * this.speed)
             for (let y = 0; y < ps.grid.height; y++) {
                 pSet(x + offX, y + offY, ps.grid.get(gx, y))
             }
@@ -133,7 +138,8 @@ class PixelSphere {
         for (let y = 0; y < ps.diameter; y++) {
             const sw = ps._getWidth(y)
             for (let x = 0; x < sw; x++) {
-                const gx = (Math.floor((x / sw + 0.5) * ps.diameter) + frameCount) % ps.grid.width
+                const gx = Math.floor((x / sw + 0.5) * ps.diameter - frameCount * this.speed)
+                //console.log(gx)
                 pSet(x + offX - sw / 2, y + offY, ps.grid.get(gx, y))
             }
         }
