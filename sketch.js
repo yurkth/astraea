@@ -1,6 +1,6 @@
 const size = 64
 const w = size * 2
-const h = size * 2 + 15
+const h = size * 2 + 19
 let px
 let scaling
 let p8Pal
@@ -32,16 +32,17 @@ function setup() {
 }
 
 function draw() {
-    px.background(p8Pal.lightGray)
+    px.background(p8Pal.darkBlue)
     px.loadPixels()
     {
-        planet.drawPlane(0, 7)
-        planet.drawSphere(w / 2, planet.grid.height + 14)
+        planet.drawPlane(0, 9)
+        // planet.drawSphereOtherSide(w / 2, planet.grid.height + 18)
+        planet.drawSphere(w / 2, planet.grid.height + 18)
     }
     px.updatePixels()
     {
-        px.text("plane", w / 2, 1)
-        px.text("sphere", w / 2, planet.grid.height + 8)
+        textb("plane", w / 2, 2)
+        textb("sphere", w / 2, planet.grid.height + 11)
     }
 
     scale(scaling)

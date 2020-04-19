@@ -1,5 +1,7 @@
 const PI2 = Math.PI * 2
 
+function mod(a, b) { return (a % b + b) % b }
+
 function setPalette() {
     p8Pal = {
         black: color(0, 0, 0),
@@ -22,6 +24,7 @@ function setPalette() {
 }
 
 function pSet(x, y, c) {
+    // if (alpha(c) === 0) return
     x = Math.floor(x)
     y = Math.floor(y)
     const index = (y * w + x) * 4
@@ -42,7 +45,15 @@ function pGet(x, y) {
     return color(r, g, b, a)
 }
 
-function mod(a, b) { return (a % b + b) % b }
+function textb(str, x, y, border = p8Pal.white, body = p8Pal.black) {
+    px.fill(border)
+    px.text(str, x - 1, y)
+    px.text(str, x + 1, y)
+    px.text(str, x, y - 1)
+    px.text(str, x, y + 1)
+    px.fill(body)
+    px.text(str, x, y)
+}
 
 class Grid {
     #table
@@ -115,7 +126,7 @@ class PixelSphere {
         }
         return this.#sphereWidth[index]
     }
-    
+
     sphereNoise(x, y, noiseScale, off = 0) {
         const r = this.grid.width / PI2
         const phi = x / this.grid.width * PI2
@@ -128,7 +139,7 @@ class PixelSphere {
 
     drawPlane(offX = 0, offY = 0) {
         for (let x = 0; x < this.grid.width; x++) {
-            const gx = Math.floor(x - frameCount * this.speed)
+            const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
             for (let y = 0; y < this.grid.height; y++) {
                 pSet(x + offX, y + offY, this.grid.get(gx, y))
             }
@@ -139,9 +150,18 @@ class PixelSphere {
         for (let y = 0; y < this.diameter; y++) {
             const sw = this._getWidth(y)
             for (let x = 0; x < sw; x++) {
-                const gx = Math.floor((x / sw + 0.5) * this.diameter - frameCount * this.speed)
-                //console.log(gx)
+                const gx = Math.floor((x / sw) * this.diameter - frameCount * this.speed)
                 pSet(x + offX - sw / 2, y + offY, this.grid.get(gx, y))
+            }
+        }
+    }
+
+    drawSphereOtherSide(offX = 0, offY = 0) {
+        for (let y = 0; y < this.diameter; y++) {
+            const sw = this._getWidth(y)
+            for (let x = 0; x < sw; x++) {
+                const gx = Math.floor((x / sw + 1) * this.diameter - frameCount * this.speed)
+                pSet(sw - 1 - x + offX - sw / 2, y + offY, this.grid.get(gx, y))
             }
         }
     }
@@ -157,7 +177,8 @@ class Planet extends PixelSphere {
                 const n = this.sphereNoise(x, y, noiseScale, 0)
                 // const hue = Math.floor(x / this.grid.width * 360)
                 const hue = Math.floor(n * 360)
-                this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
+                this.grid.set(x, y, n > 0.5 ? p8Pal.green : p8Pal.blue)
+                // this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
             }
         }
     }
