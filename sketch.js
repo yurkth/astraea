@@ -31,7 +31,8 @@ function setup() {
         for (let y = 0; y < ps.grid.height; y++) {
             //ps.grid.set(x, y, Math.floor(x / ps.grid.width * 360))
             const n = sphereNoise(x, y, noiseScale, 0)
-            ps.grid.set(x, y, color(`hsb(${n}, 80%, 100%)`))
+            const hue = Math.floor(n * 360)
+            ps.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
         }
     }
 }

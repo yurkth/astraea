@@ -48,7 +48,7 @@ function sphereNoise(x, y, noiseScale, off = 0) {
     const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + off * 2)
     const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + off * 2)
     const nz = r * (Math.cos(theta) + 1 + off * 2)
-    return Math.floor(noise(nx * noiseScale, ny * noiseScale, nz * noiseScale) * 360)
+    return noise(nx * noiseScale, ny * noiseScale, nz * noiseScale)
 }
 
 class Grid {
