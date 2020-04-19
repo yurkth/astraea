@@ -1,3 +1,5 @@
+const PI2 = Math.PI * 2
+
 function setPalette() {
     p8Pal = {
         black: color(0, 0, 0),
@@ -41,17 +43,6 @@ function pGet(x, y) {
 }
 
 function mod(a, b) { return (a % b + b) % b }
-
-const pi2 = Math.PI * 2
-function sphereNoise(x, y, noiseScale, off = 0) {
-    const r = ps.grid.width / pi2
-    const phi = x / ps.grid.width * pi2
-    const theta = y / ps.grid.height * Math.PI
-    const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + off * 2)
-    const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + off * 2)
-    const nz = r * (Math.cos(theta) + 1 + off * 2)
-    return noise(nx * noiseScale, ny * noiseScale, nz * noiseScale)
-}
 
 class Grid {
     #table
@@ -124,23 +115,49 @@ class PixelSphere {
         }
         return this.#sphereWidth[index]
     }
+    
+    sphereNoise(x, y, noiseScale, off = 0) {
+        const r = this.grid.width / PI2
+        const phi = x / this.grid.width * PI2
+        const theta = y / this.grid.height * Math.PI
+        const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + off * 2)
+        const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + off * 2)
+        const nz = r * (Math.cos(theta) + 1 + off * 2)
+        return noise(nx * noiseScale, ny * noiseScale, nz * noiseScale)
+    }
 
     drawPlane(offX = 0, offY = 0) {
-        for (let x = 0; x < ps.grid.width; x++) {
+        for (let x = 0; x < this.grid.width; x++) {
             const gx = Math.floor(x - frameCount * this.speed)
-            for (let y = 0; y < ps.grid.height; y++) {
-                pSet(x + offX, y + offY, ps.grid.get(gx, y))
+            for (let y = 0; y < this.grid.height; y++) {
+                pSet(x + offX, y + offY, this.grid.get(gx, y))
             }
         }
     }
 
     drawSphere(offX = 0, offY = 0) {
-        for (let y = 0; y < ps.diameter; y++) {
-            const sw = ps._getWidth(y)
+        for (let y = 0; y < this.diameter; y++) {
+            const sw = this._getWidth(y)
             for (let x = 0; x < sw; x++) {
-                const gx = Math.floor((x / sw + 0.5) * ps.diameter - frameCount * this.speed)
+                const gx = Math.floor((x / sw + 0.5) * this.diameter - frameCount * this.speed)
                 //console.log(gx)
-                pSet(x + offX - sw / 2, y + offY, ps.grid.get(gx, y))
+                pSet(x + offX - sw / 2, y + offY, this.grid.get(gx, y))
+            }
+        }
+    }
+}
+
+class Planet extends PixelSphere {
+    constructor(diameter, speed = 1) {
+        super(diameter, speed)
+
+        const noiseScale = 0.6 / Math.sqrt(this.diameter)
+        for (let x = 0; x < this.grid.width; x++) {
+            for (let y = 0; y < this.grid.height; y++) {
+                const n = this.sphereNoise(x, y, noiseScale, 0)
+                // const hue = Math.floor(x / this.grid.width * 360)
+                const hue = Math.floor(n * 360)
+                this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
             }
         }
     }

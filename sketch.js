@@ -6,7 +6,7 @@ let scaling
 let p8Pal
 let p8Font
 
-let ps = new PixelSphere(size)
+let planet
 
 function preload() {
     // https://www.lexaloffle.com/bbs/?tid=3760
@@ -27,27 +27,21 @@ function setup() {
     px.textAlign(CENTER, TOP)
     px.fill(p8Pal.black)
 
-    const noiseScale = 0.6 / Math.sqrt(size)
-    for (let x = 0; x < ps.grid.width; x++) {
-        for (let y = 0; y < ps.grid.height; y++) {
-            const n = sphereNoise(x, y, noiseScale, 0)
-            const hue = Math.floor(n * 360) // Math.floor(x / ps.grid.width * 360)
-            ps.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
-        }
-    }
+    noiseSeed(0)
+    planet = new Planet(size)
 }
 
 function draw() {
     px.background(p8Pal.lightGray)
     px.loadPixels()
     {
-        ps.drawPlane(0, 7)
-        ps.drawSphere(w / 2, ps.grid.height + 14)
+        planet.drawPlane(0, 7)
+        planet.drawSphere(w / 2, planet.grid.height + 14)
     }
     px.updatePixels()
     {
         px.text("plane", w / 2, 1)
-        px.text("sphere", w / 2, ps.grid.height + 8)
+        px.text("sphere", w / 2, planet.grid.height + 8)
     }
 
     scale(scaling)
