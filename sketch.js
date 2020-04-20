@@ -7,6 +7,7 @@ let p8Pal
 let p8Font
 
 let planet
+let cloud
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
@@ -26,8 +27,7 @@ function setup() {
   px.textFont(p8Font, 5)
   px.textAlign(CENTER, TOP)
   px.fill(p8Pal.black)
-
-  noiseSeed(0)
+  
   planet = new Planet({
     diameter: size,
     speed: 1,
