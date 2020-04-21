@@ -1,6 +1,6 @@
 const size = 64
-const w = size * 2
-const h = size * 2 + 23
+const pw = size * 2
+const ph = size * 2 + 23
 let px
 let scaling
 let p8Pal
@@ -15,11 +15,11 @@ function preload() {
 }
 
 function setup() {
-  const minScale = 3
-  scaling = Math.floor(Math.max(Math.min(windowWidth / w, (windowHeight - 485) / h), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
-  const canvas = createCanvas(w * scaling, h * scaling)
+  const minScale = 2
+  scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
+  const canvas = createCanvas(pw * scaling, ph * scaling)
   canvas.parent("canvas")
-  px = createGraphics(w, h)
+  px = createGraphics(pw, ph)
   noSmooth()
 
   setPalette()
@@ -28,6 +28,7 @@ function setup() {
   px.textAlign(CENTER, TOP)
   px.fill(p8Pal.black)
   
+  // noLoop()
   planet = new Planet({
     diameter: size,
     speed: 1,
@@ -38,7 +39,7 @@ function setup() {
       y: 9
     },
     sphereOffset: {
-      x: w / 2,
+      x: pw / 2,
       y: size + 20
     }
   })
@@ -48,7 +49,7 @@ function setup() {
     depth: 1,
     threshold: 0.6,
     sphereOffset: {
-      x: w / 2,
+      x: pw / 2,
       y: size + 18
     }
   })
@@ -65,8 +66,8 @@ function draw() {
   }
   px.updatePixels()
   {
-    textb("plane", w / 2, 2)
-    textb("sphere", w / 2, planet.grid.height + 11)
+    textb("plane", pw / 2, 2)
+    textb("sphere", pw / 2, planet.grid.height + 11)
   }
 
   scale(scaling)

@@ -29,7 +29,7 @@ function pSet(x, y, c) {
   if (alpha(c) === 0) return
   x = Math.floor(x)
   y = Math.floor(y)
-  const index = (y * w + x) * 4
+  const index = (y * pw + x) * 4
   px.pixels[index] = red(c)
   px.pixels[index + 1] = green(c)
   px.pixels[index + 2] = blue(c)
@@ -39,7 +39,7 @@ function pSet(x, y, c) {
 function pGet(x, y) {
   x = Math.floor(x)
   y = Math.floor(y)
-  const index = (y * w + x) * 4
+  const index = (y * pw + x) * 4
   const r = px.pixels[index]
   const g = px.pixels[index + 1]
   const b = px.pixels[index + 2]
@@ -115,79 +115,69 @@ const ng = new NumberGenerator(0)
 console.log(`seed: ${ng.seed}`)
 
 class Planet {
-  #sphereWidth
+  #sphereWidth = []
   constructor(options) {
     this.diameter = options.diameter
     this.speed = init(options.speed, 1)
-    const depth = init(options.depth, 0)
-    const threshold = init(options.threshold, 0)
+    this.depth = init(options.depth, 0) // depth >= 0じゃないとダメかも
+    this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, { x: 0, y: 0 })
     this.sphereOffset = init(options.sphereOffset, { x: 0, y: 0 })
+    this.noiseScale = 0.05
 
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
-    this.#sphereWidth = this._getSphereWidth()
-
-    const noiseScale = 0.05
-    for (let x = 0; x < this.grid.width; x++) {
-      for (let y = 0; y < this.grid.height; y++) {
-        const n = this._sphereNoise(x, y, noiseScale, depth)
-        // const hue = Math.floor(x / this.grid.width * 360)
-        /*const hue = Math.floor(n * 360)
-        this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))*/
-        if (threshold === 0) {
-          this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
-        }
-        else {
-          this.grid.set(x, y, n > threshold ? p8Pal.white : color(0, 0, 0, 0))
-        }
-      }
-    }
+    this._setSphereWidth()
+    this._setSphereNoise()
   }
 
-  _getSphereWidth() {
+  _setSphereWidth() {
     // Reference: https://github.com/nesbox/TIC-80/blob/master/src/tic.c#L948-L961
-    let sphereWidth = []
     const parity = 1 - this.diameter % 2
     let r = Math.floor(this.diameter / 2) - parity
     let y = -r
     let x = 0
     let d = 2 - 2 * r
+    const i = r
 
     do {
       r = d
       if (r > y || d > x) {
-        sphereWidth.push(x * 2 + 1 + parity)
+        const w = x * 2 + 1 + parity
+        this.#sphereWidth[y + i] = w
+        this.#sphereWidth[this.diameter - y - i - 1] = w
         d += ++y * 2 + 1
       }
       if (r <= x) {
         d += ++x * 2 + 1
       }
     } while (y <= 0)
-    return sphereWidth
   }
 
-  _getWidth(y) {
-    if (y < 0 || this.diameter <= y) {
-      throw new RangeError(`The argument must be between ${0} and ${this.diameter - 1}.`)
-    }
-
-    let index
-    if (y < Math.floor(this.diameter / 2) + this.diameter % 2) {
-      index = y
-    } else {
-      index = this.diameter - y - 1
-    }
-    return this.#sphereWidth[index]
-  }
-
-  _sphereNoise(x, y, noiseScale, depth = 0) { // depth >= 0じゃないとダメかも
+  _sphereNoise(x, y) {
     const r = this.grid.width / PI2
     const phi = x / this.grid.width * PI2
     const theta = y / this.grid.height * Math.PI
-    const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + depth * 2)
-    const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + depth * 2)
-    const nz = r * (Math.cos(theta) + 1 + depth * 2)
-    return ng.noise3D(nx * noiseScale, ny * noiseScale, nz * noiseScale)
+    const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + this.depth * 2)
+    const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + this.depth * 2)
+    const nz = r * (Math.cos(theta) + 1 + this.depth * 2)
+    return ng.noise3D(nx * this.noiseScale, ny * this.noiseScale, nz * this.noiseScale)
+  }
+
+  _setSphereNoise() {
+    for (let x = 0; x < this.grid.width; x++) {
+      for (let y = 0; y < this.grid.height; y++) {
+        const n = this._sphereNoise(x, y)
+        // const hue = Math.floor(x / this.grid.width * 360)
+        /*const hue = Math.floor(n * 360)
+        this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))*/
+        if (this.threshold === 0) {
+          this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
+        }
+        else {
+          this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0))
+        }
+      }
+    }
   }
 
   drawPlane() {
@@ -201,7 +191,7 @@ class Planet {
 
   drawSphere() {
     for (let y = 0; y < this.diameter; y++) {
-      const sw = this._getWidth(y)
+      const sw = this.#sphereWidth[y]
       for (let x = 0; x < sw; x++) {
         const gx = Math.floor((x / sw) * this.diameter - frameCount * this.speed)
         pSet(x + this.sphereOffset.x - sw / 2, y + this.sphereOffset.y, this.grid.get(gx, y))
@@ -209,9 +199,9 @@ class Planet {
     }
   }
 
-  drawSphereOtherSide(offX = 0, offY = 0) {
+  drawSphereOtherSide() {
     for (let y = 0; y < this.diameter; y++) {
-      const sw = this._getWidth(y)
+      const sw = this.#sphereWidth[y]
       for (let x = 0; x < sw; x++) {
         const gx = Math.floor((x / sw + 1) * this.diameter - frameCount * this.speed)
         if (alpha(this.grid.get(gx, y)) !== 0) {
