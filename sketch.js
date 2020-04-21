@@ -27,7 +27,7 @@ function setup() {
   px.textFont(p8Font, 5)
   px.textAlign(CENTER, TOP)
   px.fill(p8Pal.black)
-  
+
   // noLoop()
   planet = new Planet({
     diameter: size,
@@ -40,7 +40,7 @@ function setup() {
     },
     sphereOffset: {
       x: pw / 2,
-      y: size + 20
+      y: size * 1.5 + 20
     }
   })
   cloud = new Planet({
@@ -50,7 +50,7 @@ function setup() {
     threshold: 0.6,
     sphereOffset: {
       x: pw / 2,
-      y: size + 18
+      y: size * 1.5 + 20
     }
   })
 }

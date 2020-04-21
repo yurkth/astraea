@@ -121,8 +121,8 @@ class Planet {
     this.speed = init(options.speed, 1)
     this.depth = init(options.depth, 0) // depth >= 0じゃないとダメかも
     this.threshold = init(options.threshold, 0)
-    this.planeOffset = init(options.planeOffset, { x: 0, y: 0 })
-    this.sphereOffset = init(options.sphereOffset, { x: 0, y: 0 })
+    this.planeOffset = init(options.planeOffset, { x: 0, y: 0 }) // 基準点: 右上
+    this.sphereOffset = init(options.sphereOffset, { x: 0, y: 0 }) // 基準点: 中心
     this.noiseScale = 0.05
 
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
@@ -172,8 +172,7 @@ class Planet {
         this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))*/
         if (this.threshold === 0) {
           this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
-        }
-        else {
+        } else {
           this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0))
         }
       }
@@ -194,7 +193,7 @@ class Planet {
       const sw = this.#sphereWidth[y]
       for (let x = 0; x < sw; x++) {
         const gx = Math.floor((x / sw) * this.diameter - frameCount * this.speed)
-        pSet(x + this.sphereOffset.x - sw / 2, y + this.sphereOffset.y, this.grid.get(gx, y))
+        pSet(x + this.sphereOffset.x - sw / 2 + 0.5, y + this.sphereOffset.y - this.diameter / 2, this.grid.get(gx, y))
       }
     }
   }
@@ -205,7 +204,7 @@ class Planet {
       for (let x = 0; x < sw; x++) {
         const gx = Math.floor((x / sw + 1) * this.diameter - frameCount * this.speed)
         if (alpha(this.grid.get(gx, y)) !== 0) {
-          pSet(sw - 1 - x + this.sphereOffset.x - sw / 2, y + this.sphereOffset.y, p8Pal.lightGray)
+          pSet(sw - 0.5 - x + this.sphereOffset.x - sw / 2, y + this.sphereOffset.y - this.diameter / 2, p8Pal.lightGray)        //}
         }
       }
     }
