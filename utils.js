@@ -26,7 +26,7 @@ function setPalette() {
 }
 
 function pSet(x, y, c) {
-  if (alpha(c) === 0) return
+  if (alpha(c) === 0) { return }
   x = Math.floor(x)
   y = Math.floor(y)
   const index = (y * pw + x) * 4
@@ -95,7 +95,7 @@ class NumberGenerator {
 
   random() { return this.#rng() }
 
-  // randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
+  randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
 
   _noise3D(x, y, z, noiseScale) { return this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale) * 0.5 + 0.5 } // [0, 1]
 
@@ -103,31 +103,28 @@ class NumberGenerator {
     let fbm = 0
     let max = 0
     for (let o = 0; o < 6; o++) {
-      const ampl = pow(0.5, o)
-      fbm += ampl * this._noise3D(x, y, z, pow(2, o))
+      const ampl = Math.pow(0.5, o)
+      fbm += ampl * this._noise3D(x, y, z, Math.pow(2, o))
       max += ampl
     }
     return fbm / max
   }
 }
 
-const ng = new NumberGenerator(0)
+const ng = new NumberGenerator()
 console.log(`seed: ${ng.seed}`)
 
-class Planet {
+class PixelSphere {
   #sphereWidth = []
-  constructor(options) {
-    this.diameter = options.diameter
-    this.speed = init(options.speed, 1)
-    this.depth = init(options.depth, 0) // depth >= 0じゃないとダメかも
-    this.threshold = init(options.threshold, 0)
-    this.planeOffset = init(options.planeOffset, { x: 0, y: 0 }) // 基準点: 右上
-    this.sphereOffset = init(options.sphereOffset, { x: 0, y: 0 }) // 基準点: 中心
-    this.noiseScale = 0.05
-
-    this.grid = new Grid(this.diameter * 2, this.diameter, 0)
+  static FRONT = false
+  static BACK = true
+  constructor(diameter) {
+    this.diameter = diameter
     this._setSphereWidth()
-    this._setSphereNoise()
+  }
+
+  get _sphereWidth() {
+    return this.#sphereWidth
   }
 
   _setSphereWidth() {
@@ -152,6 +149,21 @@ class Planet {
       }
     } while (y <= 0)
   }
+}
+
+class Planet extends PixelSphere {
+  constructor(options) {
+    super(options.diameter)
+    this.speed = init(options.speed, 1)
+    this.depth = init(options.depth, 0) // depth >= 0じゃないとダメかも
+    this.threshold = init(options.threshold, 0)
+    this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
+    this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
+    this.noiseScale = 0.05
+
+    this.grid = new Grid(this.diameter * 2, this.diameter, 0)
+    this._setSphereNoise()
+  }
 
   _sphereNoise(x, y) {
     const r = this.grid.width / PI2
@@ -167,9 +179,8 @@ class Planet {
     for (let x = 0; x < this.grid.width; x++) {
       for (let y = 0; y < this.grid.height; y++) {
         const n = this._sphereNoise(x, y)
-        // const hue = Math.floor(x / this.grid.width * 360)
-        /*const hue = Math.floor(n * 360)
-        this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))*/
+        // const hue = Math.floor(n * 360)
+        // this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
         if (this.threshold === 0) {
           this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
         } else {
@@ -183,29 +194,49 @@ class Planet {
     for (let x = 0; x < this.grid.width; x++) {
       const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
       for (let y = 0; y < this.grid.height; y++) {
-        pSet(x + this.planeOffset.x, y + this.planeOffset.y, this.grid.get(gx, y))
+        pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.grid.get(gx, y))
       }
     }
   }
 
-  drawSphere() {
+  draw(isBack) {
     for (let y = 0; y < this.diameter; y++) {
-      const sw = this.#sphereWidth[y]
+      const sw = this._sphereWidth[y]
       for (let x = 0; x < sw; x++) {
-        const gx = Math.floor((x / sw) * this.diameter - frameCount * this.speed)
-        pSet(x + this.sphereOffset.x - sw / 2 + 0.5, y + this.sphereOffset.y - this.diameter / 2, this.grid.get(gx, y))
+        const gx = Math.floor((x / sw + (isBack ? 1 : 0)) * this.diameter - frameCount * this.speed)
+        const g = this.grid.get(gx, y)
+        pSet((isBack ? -1 : 1) * (x - sw / 2 + 0.5) + this.sphereOffset[0], y + this.sphereOffset[1] - this.diameter / 2, isBack ? alpha(g) === 0 ? color(0, 0, 0, 0) : p8Pal.lightGray : g)
       }
     }
   }
+}
 
-  drawSphereOtherSide() {
+class Satellite extends PixelSphere {
+  constructor(options) {
+    super(options.diameter)
+    this.color = options.color
+    this.speed = init(options.speed, 1)
+    this.a = init(options.a, size * 2 / 3) // 横
+    this.b = init(options.b, 0) // 縦
+    this.initAngle = init(options.initAngle, 0)
+    const rotate = init(options.rotate, 0) % 360 * PI / 180 // -90~90
+    this.offset = init(options.offset, [0, 0]) // 基準点: 中心
+
+    this.s = Math.sin(rotate)
+    this.c = Math.cos(rotate)
+  }
+
+  draw(isBack) {
+    const rad = (-frameCount - this.initAngle) * this.speed % 360 * Math.PI / 180
+    if (isBack ^ (Math.abs(rad) < PI)) { return }
+    const ex = this.a * Math.cos(rad)
+    const ey = this.b * Math.sin(rad)
+    const px = ex * this.c - ey * this.s
+    const py = ex * this.s + ey * this.c
     for (let y = 0; y < this.diameter; y++) {
-      const sw = this.#sphereWidth[y]
+      const sw = this._sphereWidth[y]
       for (let x = 0; x < sw; x++) {
-        const gx = Math.floor((x / sw + 1) * this.diameter - frameCount * this.speed)
-        if (alpha(this.grid.get(gx, y)) !== 0) {
-          pSet(sw - 0.5 - x + this.sphereOffset.x - sw / 2, y + this.sphereOffset.y - this.diameter / 2, p8Pal.lightGray)        //}
-        }
+        pSet(px + x + this.offset[0] - sw / 2 + 0.5, py + y + this.offset[1] - this.diameter / 2, this.color)
       }
     }
   }

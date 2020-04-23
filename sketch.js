@@ -1,6 +1,6 @@
 const size = 64
-const pw = size * 2
-const ph = size * 2 + 23
+const pw = size * 3
+const ph = size * 3.5
 let px
 let scaling
 let p8Pal
@@ -8,6 +8,7 @@ let p8Font
 
 let planet
 let cloud
+let satellites = []
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
@@ -34,35 +35,44 @@ function setup() {
     speed: 1,
     depth: 0,
     threshold: 0,
-    planeOffset: {
-      x: 0,
-      y: 9
-    },
-    sphereOffset: {
-      x: pw / 2,
-      y: size * 1.5 + 20
-    }
+    planeOffset: [pw / 2 - size, 9],
+    sphereOffset: [pw / 2, size * 2.5]
   })
   cloud = new Planet({
     diameter: size + 4,
     speed: 0.5,
     depth: 1,
     threshold: 0.6,
-    sphereOffset: {
-      x: pw / 2,
-      y: size * 1.5 + 20
-    }
+    sphereOffset: planet.sphereOffset
   })
+  for (let i = 0; i < 4; i++) {
+    satellites.push(new Satellite({
+      diameter: ng.randint(1, 8),
+      color: p8Pal.orange,
+      speed: ng.random() + 0.5,
+      a: ng.randint(48, 64),
+      b: ng.randint(8, 16),
+      initAngle: ng.randint(0, 360),
+      rotate: ng.randint(-90, 90),
+      offset: planet.sphereOffset
+    }))
+  }
 }
-
 function draw() {
   px.background(p8Pal.darkBlue)
   px.loadPixels()
   {
     planet.drawPlane(0, 9)
-    cloud.drawSphereOtherSide()
-    planet.drawSphere()
-    cloud.drawSphere()
+
+    for (let s of satellites) {
+      s.draw(Satellite.BACK)
+    }
+    cloud.draw(Planet.BACK)
+    planet.draw(Planet.FRONT)
+    cloud.draw(Planet.FRONT)
+    for (let s of satellites) {
+      s.draw(Satellite.FRONT)
+    }
   }
   px.updatePixels()
   {
