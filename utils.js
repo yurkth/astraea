@@ -64,6 +64,7 @@ class Grid {
     this.height = height
     this.#table = new Array(this.width * this.height).fill(init)
   }
+
   set(x, y, val) {
     if (x < 0 || this.width <= x) {
       throw new RangeError(`The argument must be between x ${0} and ${this.width - 1}.`)
@@ -73,6 +74,7 @@ class Grid {
       this.#table[y * this.width + x] = val
     }
   }
+
   get(x, y) {
     if (x < 0 || this.width <= x) {
       x = mod(x, this.width)
@@ -84,40 +86,60 @@ class Grid {
   }
 }
 
-class NumberGenerator {
+class Random {
   #rng
-  #simplex
   constructor(seed) {
     this.seed = init(seed, Math.random())
     this.#rng = new alea(this.seed)
-    this.#simplex = new SimplexNoise(this.#rng)
   }
 
   random() { return this.#rng() }
 
   randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
+}
 
-  _noise3D(x, y, z, noiseScale) { return this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale) * 0.5 + 0.5 } // [0, 1]
+class NoiseGenerator {
+  #simplex
+  constructor(seed) {
+    this.seed = init(seed, Math.random())
+    this.#simplex = new SimplexNoise(new alea(this.seed))
+  }
 
-  noise3D(x, y, z) {
-    let fbm = 0
-    let max = 0
-    for (let o = 0; o < 6; o++) {
+  _noise3D(x, y, z, noiseScale = 1) { return this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale) * 0.5 + 0.5 } // [0, 1]
+
+  _ridged(x, y, z, noiseScale = 1) { return Math.abs(this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale)) } // [0, 1]
+
+  _fbm(func, x, y, z, octaves = 6, noiseScale = 1) {
+    let result = 0
+    let denom = 0
+    for (let o = 0; o < octaves; o++) {
       const ampl = Math.pow(0.5, o)
-      fbm += ampl * this._noise3D(x, y, z, Math.pow(2, o))
-      max += ampl
+      result += ampl * func(x, y, z, Math.pow(2, o) * noiseScale)
+      denom += ampl
     }
-    return fbm / max
+    return result / denom
+  }
+
+  simplexFbm(x, y, z, octaves = 6, noiseScale = 1) {
+    return this._fbm(this._noise3D.bind(ng), x, y, z, octaves, noiseScale)
+  }
+
+  ridgedFbm(x, y, z, octaves = 6, noiseScale = 1) {
+    return this._fbm(this._ridged.bind(ng), x, y, z, octaves, noiseScale)
+  }
+
+  domainWarping(x, y, z, octaves = 6, noiseScale = 1) {
+    const n = this._noise3D(x, y, z)
+    return this.simplexFbm(x + n, y + n, z + n, octaves, noiseScale)
   }
 }
 
-const ng = new NumberGenerator()
-console.log(`seed: ${ng.seed}`)
+const rng = new Random(0)
+const ng = new NoiseGenerator(rng.seed)
+console.log(`seed: ${rng.seed}`)
 
 class PixelSphere {
   #sphereWidth = []
-  static FRONT = false
-  static BACK = true
   constructor(diameter) {
     this.diameter = diameter
     this._setSphereWidth()
@@ -155,36 +177,59 @@ class Planet extends PixelSphere {
   constructor(options) {
     super(options.diameter)
     this.speed = init(options.speed, 1)
-    this.depth = init(options.depth, 0) // depth >= 0じゃないとダメかも
     this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
     this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
-    this.noiseScale = 0.05
+    this.noiseScale = 1 // TODO: diameterをもとに計算
 
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
     this._setSphereNoise()
   }
 
-  _sphereNoise(x, y) {
-    const r = this.grid.width / PI2
+  _convertVec3(x, y) {
     const phi = x / this.grid.width * PI2
     const theta = y / this.grid.height * Math.PI
-    const nx = r * (Math.sin(theta) * Math.cos(phi) + 1 + this.depth * 2)
-    const ny = r * (Math.sin(theta) * Math.sin(phi) + 1 + this.depth * 2)
-    const nz = r * (Math.cos(theta) + 1 + this.depth * 2)
-    return ng.noise3D(nx * this.noiseScale, ny * this.noiseScale, nz * this.noiseScale)
+    const nx = Math.sin(theta) * Math.cos(phi) + 1
+    const ny = Math.sin(theta) * Math.sin(phi) + 1
+    const nz = Math.cos(theta) + 1
+    return [nx, ny, nz]
   }
 
   _setSphereNoise() {
     for (let x = 0; x < this.grid.width; x++) {
       for (let y = 0; y < this.grid.height; y++) {
-        const n = this._sphereNoise(x, y)
-        // const hue = Math.floor(n * 360)
-        // this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
-        if (this.threshold === 0) {
-          this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
-        } else {
-          this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0))
+        let n
+        switch (1) {
+          case 1:
+            n = ng.simplexFbm(...this._convertVec3(x, y))
+            break
+          case 2:
+            n = ng.ridgedFbm(...this._convertVec3(x, y))
+            break
+          case 3:
+            n = ng.domainWarping(...this._convertVec3(x, y))
+            break
+          case 4:
+            n = (Math.cos((y + ng.simplexFbm(...this._convertVec3(x, y)) * 15) * 8 / this.grid.height * PI2) + 1) * 0.5
+            break
+        }
+        
+        switch (2) {
+          case 1:
+            const hue = Math.floor(n * 360)
+            this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
+            break
+          case 2:
+            const bright = Math.floor(n * 100)
+            this.grid.set(x, y, color(`hsb(0, 0%, ${bright}%)`))
+            break
+          case 3:
+            if (this.threshold === 0) {
+              this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
+            } else {
+              this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0))
+            }
+            break
         }
       }
     }
@@ -239,5 +284,12 @@ class Satellite extends PixelSphere {
         pSet(px + x + this.offset[0] - sw / 2 + 0.5, py + y + this.offset[1] - this.diameter / 2, this.color)
       }
     }
+  }
+}
+
+class Properties {
+  static Draw = {
+    Front: false,
+    Back: true
   }
 }

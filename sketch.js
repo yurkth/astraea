@@ -27,7 +27,6 @@ function setup() {
   px.noStroke()
   px.textFont(p8Font, 5)
   px.textAlign(CENTER, TOP)
-  px.fill(p8Pal.black)
 
   // noLoop()
   planet = new Planet({
@@ -47,17 +46,18 @@ function setup() {
   })
   for (let i = 0; i < 4; i++) {
     satellites.push(new Satellite({
-      diameter: ng.randint(1, 8),
+      diameter: rng.randint(1, 8),
       color: p8Pal.orange,
-      speed: ng.random() + 0.5,
-      a: ng.randint(48, 64),
-      b: ng.randint(8, 16),
-      initAngle: ng.randint(0, 360),
-      rotate: ng.randint(-90, 90),
+      speed: rng.random() + 0.5,
+      a: rng.randint(48, 64),
+      b: rng.randint(8, 16),
+      initAngle: rng.randint(0, 360),
+      rotate: rng.randint(-90, 90),
       offset: planet.sphereOffset
     }))
   }
 }
+
 function draw() {
   px.background(p8Pal.darkBlue)
   px.loadPixels()
@@ -65,13 +65,13 @@ function draw() {
     planet.drawPlane(0, 9)
 
     for (let s of satellites) {
-      s.draw(Satellite.BACK)
+      s.draw(Properties.Draw.Back)
     }
-    cloud.draw(Planet.BACK)
-    planet.draw(Planet.FRONT)
-    cloud.draw(Planet.FRONT)
+    cloud.draw(Properties.Draw.Back)
+    planet.draw(Properties.Draw.Front)
+    cloud.draw(Properties.Draw.Front)
     for (let s of satellites) {
-      s.draw(Satellite.FRONT)
+      s.draw(Properties.Draw.Front)
     }
   }
   px.updatePixels()
