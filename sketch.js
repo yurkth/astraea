@@ -10,6 +10,8 @@ let planet
 let cloud
 let satellites = []
 
+// let palette
+
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
   p8Font = loadFont("PICO-8_mono_upper.ttf")
@@ -22,6 +24,23 @@ function setup() {
   canvas.parent("canvas")
   px = createGraphics(pw, ph)
   noSmooth()
+
+  // palette = [
+  //   color("#19254f"),
+  //   color("#f3f1e3"),
+  //   color("#49608c"),
+  //   color("#169adb"),
+  //   color("#3bc2d1"),
+  //   color("#0b965a"),
+  //   color("#1bd15b"),
+  //   color("#8ed66f"),
+  //   color("#b03862"),
+  //   color("#e34451"),
+  //   color("#e37f78"),
+  //   color("#c27a1d"),
+  //   color("#eda72d"),
+  //   color("#e0c267"),
+  // ]
 
   setPalette()
   px.noStroke()

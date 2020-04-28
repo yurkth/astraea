@@ -121,11 +121,11 @@ class NoiseGenerator {
   }
 
   simplexFbm(x, y, z, octaves = 6, noiseScale = 1) {
-    return this._fbm(this._noise3D.bind(ng), x, y, z, octaves, noiseScale)
+    return this._fbm(this._noise3D.bind(this), x, y, z, octaves, noiseScale)
   }
 
   ridgedFbm(x, y, z, octaves = 6, noiseScale = 1) {
-    return this._fbm(this._ridged.bind(ng), x, y, z, octaves, noiseScale)
+    return this._fbm(this._ridged.bind(this), x, y, z, octaves, noiseScale)
   }
 
   domainWarping(x, y, z, octaves = 6, noiseScale = 1) {
@@ -135,7 +135,7 @@ class NoiseGenerator {
 }
 
 const rng = new Random(0)
-const ng = new NoiseGenerator(rng.seed)
+const ng = new NoiseGenerator(rng.random())
 console.log(`seed: ${rng.seed}`)
 
 class PixelSphere {
@@ -199,7 +199,7 @@ class Planet extends PixelSphere {
     for (let x = 0; x < this.grid.width; x++) {
       for (let y = 0; y < this.grid.height; y++) {
         let n
-        switch (1) {
+        switch (5) {
           case 1:
             n = ng.simplexFbm(...this._convertVec3(x, y))
             break
@@ -210,11 +210,14 @@ class Planet extends PixelSphere {
             n = ng.domainWarping(...this._convertVec3(x, y))
             break
           case 4:
-            n = (Math.cos((y + ng.simplexFbm(...this._convertVec3(x, y)) * 15) * 8 / this.grid.height * PI2) + 1) * 0.5
+            n = (Math.cos((4 * y / this.grid.height + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
+            break
+          case 5:
+            n = (Math.cos((4 * x / this.grid.width + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
             break
         }
-        
-        switch (2) {
+
+        switch (3) {
           case 1:
             const hue = Math.floor(n * 360)
             this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
@@ -227,7 +230,7 @@ class Planet extends PixelSphere {
             if (this.threshold === 0) {
               this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
             } else {
-              this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0))
+              this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0)) // TODO: 雲のときにSeed設定
             }
             break
         }
