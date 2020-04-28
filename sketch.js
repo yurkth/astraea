@@ -6,8 +6,8 @@ let scaling
 let p8Pal
 let p8Font
 
+let stars
 let planet
-let cloud
 let satellites = []
 
 // let palette
@@ -18,7 +18,7 @@ function preload() {
 }
 
 function setup() {
-  const minScale = 2
+  const minScale = 1
   scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
   const canvas = createCanvas(pw * scaling, ph * scaling)
   canvas.parent("canvas")
@@ -47,29 +47,39 @@ function setup() {
   px.textFont(p8Font, 5)
   px.textAlign(CENTER, TOP)
 
+  let pdsObj = new PoissonDiskSampling({
+    shape: [pw, ph],
+    minDistance: 30,
+    maxDistance: 60,
+    tries: 20
+  }, rng.random.bind(rng))
+  stars = pdsObj.fill()
+
   // noLoop()
   planet = new Planet({
     diameter: size,
+    noiseMode: Properties.Noise.Simplex,
     speed: 1,
     depth: 0,
     threshold: 0,
     planeOffset: [pw / 2 - size, 9],
     sphereOffset: [pw / 2, size * 2.5]
   })
-  cloud = new Planet({
-    diameter: size + 4,
-    speed: 0.5,
+  satellites.push(new Planet({
+    diameter: planet.diameter + 4,
+    noiseMode: Properties.Noise.Simplex,
+    speed: (size + 4) / size,
     depth: 1,
     threshold: 0.6,
     sphereOffset: planet.sphereOffset
-  })
+  }))
   for (let i = 0; i < 4; i++) {
     satellites.push(new Satellite({
       diameter: rng.randint(1, 8),
       color: p8Pal.orange,
       speed: rng.random() + 0.5,
-      a: rng.randint(48, 64),
-      b: rng.randint(8, 16),
+      a: rng.randint(planet.diameter * 3 / 4, planet.diameter),
+      b: rng.randint(planet.diameter / 8, planet.diameter / 4),
       initAngle: rng.randint(0, 360),
       rotate: rng.randint(-90, 90),
       offset: planet.sphereOffset
@@ -81,14 +91,16 @@ function draw() {
   px.background(p8Pal.darkBlue)
   px.loadPixels()
   {
+    for (let point of stars) {
+      pSet(...point, p8Pal.white)
+    }
+
     planet.drawPlane(0, 9)
 
     for (let s of satellites) {
       s.draw(Properties.Draw.Back)
     }
-    cloud.draw(Properties.Draw.Back)
     planet.draw(Properties.Draw.Front)
-    cloud.draw(Properties.Draw.Front)
     for (let s of satellites) {
       s.draw(Properties.Draw.Front)
     }

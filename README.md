@@ -13,6 +13,7 @@ pixel-sphere is licensed under the MIT license. See the [LICENSE](https://github
 - [p5.js](https://github.com/processing/p5.js) is licensed under the LGPL-2.1 license.
 - [seedrandom](https://github.com/davidbau/seedrandom) is licensed under the MIT license.
 - [simplex-noise](https://github.com/jwagner/simplex-noise.js) is licensed under the MIT license.
+- [poisson-disk-sampling](https://github.com/kchapelier/poisson-disk-sampling) is licensed under the MIT license.
 
 ### Assets
 

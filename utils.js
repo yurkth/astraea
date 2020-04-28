@@ -176,6 +176,7 @@ class PixelSphere {
 class Planet extends PixelSphere {
   constructor(options) {
     super(options.diameter)
+    this.noiseMode = init(options.noiseMode, Properties.Noise.Simplex)
     this.speed = init(options.speed, 1)
     this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
@@ -199,20 +200,20 @@ class Planet extends PixelSphere {
     for (let x = 0; x < this.grid.width; x++) {
       for (let y = 0; y < this.grid.height; y++) {
         let n
-        switch (5) {
-          case 1:
+        switch (this.noiseMode) {
+          case Properties.Noise.Simplex:
             n = ng.simplexFbm(...this._convertVec3(x, y))
             break
-          case 2:
+          case Properties.Noise.Ridged:
             n = ng.ridgedFbm(...this._convertVec3(x, y))
             break
-          case 3:
+          case Properties.Noise.DomainWarping:
             n = ng.domainWarping(...this._convertVec3(x, y))
             break
-          case 4:
+          case Properties.Noise.HStripe:
             n = (Math.cos((4 * y / this.grid.height + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
             break
-          case 5:
+          case Properties.Noise.VStripe:
             n = (Math.cos((4 * x / this.grid.width + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
             break
         }
@@ -267,7 +268,7 @@ class Satellite extends PixelSphere {
     this.a = init(options.a, size * 2 / 3) // 横
     this.b = init(options.b, 0) // 縦
     this.initAngle = init(options.initAngle, 0)
-    const rotate = init(options.rotate, 0) % 360 * PI / 180 // -90~90
+    const rotate = init(options.rotate, 0) % 360 * Math.PI / 180 // -90~90
     this.offset = init(options.offset, [0, 0]) // 基準点: 中心
 
     this.s = Math.sin(rotate)
@@ -276,7 +277,7 @@ class Satellite extends PixelSphere {
 
   draw(isBack) {
     const rad = (-frameCount - this.initAngle) * this.speed % 360 * Math.PI / 180
-    if (isBack ^ (Math.abs(rad) < PI)) { return }
+    if (isBack ^ (Math.abs(rad) < Math.PI)) { return }
     const ex = this.a * Math.cos(rad)
     const ey = this.b * Math.sin(rad)
     const px = ex * this.c - ey * this.s
@@ -294,5 +295,12 @@ class Properties {
   static Draw = {
     Front: false,
     Back: true
+  }
+  static Noise = {
+    Simplex: 0,
+    Ridged: 1,
+    DomainWarping: 2,
+    VStripe: 3,
+    HStripe: 4
   }
 }
