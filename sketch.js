@@ -18,7 +18,7 @@ function preload() {
 }
 
 function setup() {
-  const minScale = 1
+  const minScale = 2
   scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
   const canvas = createCanvas(pw * scaling, ph * scaling)
   canvas.parent("canvas")

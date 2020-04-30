@@ -109,28 +109,28 @@ class NoiseGenerator {
 
   _ridged(x, y, z, noiseScale = 1) { return Math.abs(this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale)) } // [0, 1]
 
-  _fbm(func, x, y, z, octaves = 6, noiseScale = 1) {
+  _fbm(func, x, y, z, octaves = 6) {
     let result = 0
     let denom = 0
     for (let o = 0; o < octaves; o++) {
       const ampl = Math.pow(0.5, o)
-      result += ampl * func(x, y, z, Math.pow(2, o) * noiseScale)
+      result += ampl * func(x, y, z, Math.pow(2, o))
       denom += ampl
     }
     return result / denom
   }
 
-  simplexFbm(x, y, z, octaves = 6, noiseScale = 1) {
-    return this._fbm(this._noise3D.bind(this), x, y, z, octaves, noiseScale)
+  simplexFbm(x, y, z, octaves = 6) {
+    return this._fbm(this._noise3D.bind(this), x, y, z, octaves)
   }
 
-  ridgedFbm(x, y, z, octaves = 6, noiseScale = 1) {
-    return this._fbm(this._ridged.bind(this), x, y, z, octaves, noiseScale)
+  ridgedFbm(x, y, z, octaves = 6) {
+    return 1 - this._fbm(this._ridged.bind(this), x, y, z, octaves)
   }
 
-  domainWarping(x, y, z, octaves = 6, noiseScale = 1) {
+  domainWarping(x, y, z, octaves = 6) {
     const n = this._noise3D(x, y, z)
-    return this.simplexFbm(x + n, y + n, z + n, octaves, noiseScale)
+    return this.simplexFbm(x + n, y + n, z + n, octaves)
   }
 }
 
@@ -181,7 +181,6 @@ class Planet extends PixelSphere {
     this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
     this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
-    this.noiseScale = 1 // TODO: diameterをもとに計算
 
     this.noise = new NoiseGenerator(rng.random())
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
@@ -218,7 +217,8 @@ class Planet extends PixelSphere {
             n = (Math.cos((4 * x / this.grid.width + this.noise.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
             break
           case null:
-            n = (y < 10 * this.noise.simplexFbm(...this._convertVec3(x, y)) || this.grid.height - y <= 10 * this.noise.simplexFbm(...this._convertVec3(x, y))) ? 1 : 0
+            const off = this.noise.simplexFbm(...this._convertVec3(x, y))
+            n = (y < 10 * off || this.grid.height - y <= 10 * off) ? 1 : 0
             break
         }
 
