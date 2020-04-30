@@ -59,17 +59,17 @@ function setup() {
   planet = new Planet({
     diameter: size,
     noiseMode: Properties.Noise.Simplex,
+    palette: [p8Pal.green, p8Pal.blue],
     speed: 1,
-    depth: 0,
-    threshold: 0,
+    threshold: 0.55,
     planeOffset: [pw / 2 - size, 9],
     sphereOffset: [pw / 2, size * 2.5]
   })
   satellites.push(new Planet({
     diameter: planet.diameter + 4,
     noiseMode: Properties.Noise.Simplex,
+    palette: [p8Pal.white, color(0, 0, 0, 0)],
     speed: (size + 4) / size,
-    depth: 1,
     threshold: 0.6,
     sphereOffset: planet.sphereOffset
   }))

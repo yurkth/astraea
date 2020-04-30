@@ -135,7 +135,6 @@ class NoiseGenerator {
 }
 
 const rng = new Random(0)
-const ng = new NoiseGenerator(rng.random())
 console.log(`seed: ${rng.seed}`)
 
 class PixelSphere {
@@ -177,12 +176,14 @@ class Planet extends PixelSphere {
   constructor(options) {
     super(options.diameter)
     this.noiseMode = init(options.noiseMode, Properties.Noise.Simplex)
+    this.palette = init(options.palette, [])
     this.speed = init(options.speed, 1)
     this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
     this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
     this.noiseScale = 1 // TODO: diameterをもとに計算
 
+    this.noise = new NoiseGenerator(rng.random())
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
     this._setSphereNoise()
   }
@@ -202,19 +203,22 @@ class Planet extends PixelSphere {
         let n
         switch (this.noiseMode) {
           case Properties.Noise.Simplex:
-            n = ng.simplexFbm(...this._convertVec3(x, y))
+            n = this.noise.simplexFbm(...this._convertVec3(x, y))
             break
           case Properties.Noise.Ridged:
-            n = ng.ridgedFbm(...this._convertVec3(x, y))
+            n = this.noise.ridgedFbm(...this._convertVec3(x, y))
             break
           case Properties.Noise.DomainWarping:
-            n = ng.domainWarping(...this._convertVec3(x, y))
+            n = this.noise.domainWarping(...this._convertVec3(x, y))
             break
           case Properties.Noise.HStripe:
-            n = (Math.cos((4 * y / this.grid.height + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
+            n = (Math.cos((4 * y / this.grid.height + this.noise.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
             break
           case Properties.Noise.VStripe:
-            n = (Math.cos((4 * x / this.grid.width + ng.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
+            n = (Math.cos((4 * x / this.grid.width + this.noise.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
+            break
+          case null:
+            n = (y < 10 * this.noise.simplexFbm(...this._convertVec3(x, y)) || this.grid.height - y <= 10 * this.noise.simplexFbm(...this._convertVec3(x, y))) ? 1 : 0
             break
         }
 
@@ -228,11 +232,7 @@ class Planet extends PixelSphere {
             this.grid.set(x, y, color(`hsb(0, 0%, ${bright}%)`))
             break
           case 3:
-            if (this.threshold === 0) {
-              this.grid.set(x, y, n > 0.55 ? p8Pal.green : p8Pal.blue)
-            } else {
-              this.grid.set(x, y, n > this.threshold ? p8Pal.white : color(0, 0, 0, 0)) // TODO: 雲のときにSeed設定
-            }
+            this.grid.set(x, y, n > this.threshold ? this.palette[0] : this.palette[1])
             break
         }
       }
