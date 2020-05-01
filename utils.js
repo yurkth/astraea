@@ -57,6 +57,17 @@ function textb(str, x, y, border = p8Pal.white, body = p8Pal.black) {
   px.text(str, x, y)
 }
 
+function weightedChoice(array, weight, value = rng.random()) {
+  const totalWeight = weight.reduce((sum, val) => sum += val, 0)
+  let threshold = value * totalWeight
+  for (let i = 0; i < array.length; i++) {
+    if (threshold < weight[i]) {
+      return array[i]
+    }
+    threshold -= weight[i]
+  }
+}
+
 class Grid {
   #table
   constructor(width, height, init) {
@@ -175,10 +186,9 @@ class PixelSphere {
 class Planet extends PixelSphere {
   constructor(options) {
     super(options.diameter)
-    this.noiseMode = init(options.noiseMode, Properties.Noise.Simplex)
-    this.palette = init(options.palette, [])
+    this.noiseMode = options.noiseMode
+    this.palette = options.palette
     this.speed = init(options.speed, 1)
-    this.threshold = init(options.threshold, 0)
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
     this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
 
@@ -199,40 +209,39 @@ class Planet extends PixelSphere {
   _setSphereNoise() {
     for (let x = 0; x < this.grid.width; x++) {
       for (let y = 0; y < this.grid.height; y++) {
-        let n
+        let off, val
         switch (this.noiseMode) {
           case Properties.Noise.Simplex:
-            n = this.noise.simplexFbm(...this._convertVec3(x, y))
+            val = this.noise.simplexFbm(...this._convertVec3(x, y))
             break
           case Properties.Noise.Ridged:
-            n = this.noise.ridgedFbm(...this._convertVec3(x, y))
+            val = this.noise.ridgedFbm(...this._convertVec3(x, y))
             break
           case Properties.Noise.DomainWarping:
-            n = this.noise.domainWarping(...this._convertVec3(x, y))
+            val = this.noise.domainWarping(...this._convertVec3(x, y))
             break
           case Properties.Noise.HStripe:
-            n = (Math.cos((4 * y / this.grid.height + this.noise.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
+            off = this.noise.simplexFbm(...this._convertVec3(x, y))
+            val = (Math.cos((4 * y / this.grid.height + off) * 2 * PI2) + 1) * 0.5
             break
           case Properties.Noise.VStripe:
-            n = (Math.cos((4 * x / this.grid.width + this.noise.simplexFbm(...this._convertVec3(x, y))) * 2 * PI2) + 1) * 0.5
-            break
-          case null:
-            const off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            n = (y < 10 * off || this.grid.height - y <= 10 * off) ? 1 : 0
+            off = this.noise.simplexFbm(...this._convertVec3(x, y))
+            val = (Math.cos((4 * x / this.grid.width + off) * 2 * PI2) + 1) * 0.5
             break
         }
 
         switch (3) {
           case 1:
-            const hue = Math.floor(n * 360)
+            const hue = Math.floor(val * 360)
             this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
             break
           case 2:
-            const bright = Math.floor(n * 100)
+            const bright = Math.floor(val * 100)
             this.grid.set(x, y, color(`hsb(0, 0%, ${bright}%)`))
             break
           case 3:
-            this.grid.set(x, y, n > this.threshold ? this.palette[0] : this.palette[1])
+            const col = weightedChoice(this.palette.colors, this.palette.weight, val)
+            this.grid.set(x, y, col)
             break
         }
       }
