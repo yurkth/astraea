@@ -104,7 +104,7 @@ class Random {
     this.#rng = new alea(this.seed)
   }
 
-  random() { return this.#rng() }
+  random() { return this.#rng() } // [0, 1)
 
   randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
 }
@@ -188,13 +188,14 @@ class Planet extends PixelSphere {
     super(options.diameter)
     this.noiseMode = options.noiseMode
     this.palette = options.palette
-    this.speed = init(options.speed, 1)
+    this.lapTime = init(options.lapTime, 1) // sec
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
     this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
 
     this.noise = new NoiseGenerator(rng.random())
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
     this._setSphereNoise()
+    this.speed = this.diameter / 30 / this.lapTime
   }
 
   _convertVec3(x, y) {

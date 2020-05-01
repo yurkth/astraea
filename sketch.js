@@ -63,25 +63,25 @@ function setup() {
       colors: [p8Pal.blue, p8Pal.peach, p8Pal.green],
       weight: [11, 1, 9]
     },
-    speed: 1,
+    lapTime: rng.random() + 1.5, // [1.5, 2.5)
     planeOffset: [pw / 2 - size, 9],
     sphereOffset: [pw / 2, size * 2.5]
   })
-  satellites.push(new Planet({
+  satellites.push(new Planet({ // cloud
     diameter: planet.diameter + 4,
     noiseMode: Properties.Noise.Simplex,
     palette: {
       colors: [color(0, 0, 0, 0), p8Pal.white],
       weight: [3, 2]
     },
-    speed: (size + 4) / size,
+    lapTime: planet.lapTime * 1.8,
     sphereOffset: planet.sphereOffset
   }))
-  for (let i = 0; i < 4; i++) {
+  for (let i = rng.randint(1, 6); i > 0; i--) {
     satellites.push(new Satellite({
-      diameter: rng.randint(1, 8),
+      diameter: rng.randint(1, size / 8),
       color: p8Pal.orange,
-      speed: rng.random() + 0.5,
+      speed: rng.random() + 0.5, // [3sec, 9sec)
       a: rng.randint(planet.diameter * 3 / 4, planet.diameter),
       b: rng.randint(planet.diameter / 8, planet.diameter / 4),
       initAngle: rng.randint(0, 360),
