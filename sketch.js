@@ -7,7 +7,7 @@ let p8Pal
 let p8Font
 
 let stars
-let planet
+let planets = []
 let satellites = []
 
 // let palette
@@ -47,16 +47,17 @@ function setup() {
   px.textFont(p8Font, 5)
   px.textAlign(CENTER, TOP)
 
-  let pdsObj = new PoissonDiskSampling({
+  const pdsObj = new PoissonDiskSampling({
     shape: [pw, ph],
-    minDistance: 30,
-    maxDistance: 60,
+    minDistance: 25,
+    maxDistance: 50,
     tries: 20
   }, rng.random.bind(rng))
-  stars = pdsObj.fill()
+  starPalette = [[p8Pal.white, p8Pal.darkGray], [2, 5]]
+  stars = pdsObj.fill().map(val => [...val, weightedChoice(...starPalette)])
 
   // noLoop()
-  planet = new Planet({
+  planets.push(new Planet({
     diameter: size,
     noiseMode: Properties.Noise.Simplex,
     palette: {
@@ -66,27 +67,27 @@ function setup() {
     lapTime: rng.random() + 1.5, // [1.5, 2.5)
     planeOffset: [pw / 2 - size, 9],
     sphereOffset: [pw / 2, size * 2.5]
-  })
+  }))
   satellites.push(new Planet({ // cloud
-    diameter: planet.diameter + 4,
+    diameter: planets[0].diameter + 4,
     noiseMode: Properties.Noise.Simplex,
     palette: {
       colors: [color(0, 0, 0, 0), p8Pal.white],
       weight: [3, 2]
     },
-    lapTime: planet.lapTime * 1.8,
-    sphereOffset: planet.sphereOffset
+    lapTime: planets[0].lapTime * 1.8,
+    sphereOffset: planets[0].sphereOffset
   }))
   for (let i = rng.randint(1, 6); i > 0; i--) {
     satellites.push(new Satellite({
       diameter: rng.randint(1, size / 8),
       color: p8Pal.orange,
       speed: rng.random() + 0.5, // [3sec, 9sec)
-      a: rng.randint(planet.diameter * 3 / 4, planet.diameter),
-      b: rng.randint(planet.diameter / 8, planet.diameter / 4),
+      a: rng.randint(planets[0].diameter * 3 / 4, planets[0].diameter),
+      b: rng.randint(planets[0].diameter / 8, planets[0].diameter / 4),
       initAngle: rng.randint(0, 360),
       rotate: rng.randint(-90, 90),
-      offset: planet.sphereOffset
+      offset: planets[0].sphereOffset
     }))
   }
 }
@@ -96,15 +97,17 @@ function draw() {
   px.loadPixels()
   {
     for (let point of stars) {
-      pSet(...point, p8Pal.white)
+      pSet(...point)
     }
 
-    planet.drawPlane(0, 9)
+    planets[0].drawPlane(0, 9)
 
     for (let s of satellites) {
       s.draw(Properties.Draw.Back)
     }
-    planet.draw(Properties.Draw.Front)
+    for (let p of planets) {
+      p.draw(Properties.Draw.Front)
+    }
     for (let s of satellites) {
       s.draw(Properties.Draw.Front)
     }
@@ -112,7 +115,7 @@ function draw() {
   px.updatePixels()
   {
     textb("plane", pw / 2, 2)
-    textb("sphere", pw / 2, planet.grid.height + 11)
+    textb("sphere", pw / 2, planets[0].grid.height + 11)
   }
 
   scale(scaling)

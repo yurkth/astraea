@@ -61,7 +61,7 @@ function weightedChoice(array, weight, value = rng.random()) {
   const totalWeight = weight.reduce((sum, val) => sum += val, 0)
   let threshold = value * totalWeight
   for (let i = 0; i < array.length; i++) {
-    if (threshold < weight[i]) {
+    if (threshold <= weight[i]) {
       return array[i]
     }
     threshold -= weight[i]
@@ -229,6 +229,10 @@ class Planet extends PixelSphere {
             off = this.noise.simplexFbm(...this._convertVec3(x, y))
             val = (Math.cos((4 * x / this.grid.width + off) * 2 * PI2) + 1) * 0.5
             break
+          case Properties.Noise.Gradation:
+            off = this.noise.simplexFbm(...this._convertVec3(x, y))
+            val = map(y + off * 10, -10, this.grid.height + 10, 0, 1)
+            break
         }
 
         switch (3) {
@@ -311,6 +315,7 @@ class Properties {
     Ridged: 1,
     DomainWarping: 2,
     VStripe: 3,
-    HStripe: 4
+    HStripe: 4,
+    Gradation: 5
   }
 }
