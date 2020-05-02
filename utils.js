@@ -27,34 +27,17 @@ function setPalette() {
 
 function pSet(x, y, c) {
   if (alpha(c) === 0) { return }
-  x = Math.floor(x)
-  y = Math.floor(y)
-  const index = (y * pw + x) * 4
-  px.pixels[index] = red(c)
-  px.pixels[index + 1] = green(c)
-  px.pixels[index + 2] = blue(c)
-  px.pixels[index + 3] = alpha(c)
-}
-
-function pGet(x, y) {
-  x = Math.floor(x)
-  y = Math.floor(y)
-  const index = (y * pw + x) * 4
-  const r = px.pixels[index]
-  const g = px.pixels[index + 1]
-  const b = px.pixels[index + 2]
-  const a = px.pixels[index + 3]
-  return color(r, g, b, a)
+  set(x, y, c)
 }
 
 function textb(str, x, y, border = p8Pal.white, body = p8Pal.black) {
-  px.fill(border)
-  px.text(str, x - 1, y)
-  px.text(str, x + 1, y)
-  px.text(str, x, y - 1)
-  px.text(str, x, y + 1)
-  px.fill(body)
-  px.text(str, x, y)
+  fill(border)
+  text(str, x - 1, y)
+  text(str, x + 1, y)
+  text(str, x, y - 1)
+  text(str, x, y + 1)
+  fill(body)
+  text(str, x, y)
 }
 
 function weightedChoice(array, weight, value = rng.random()) {

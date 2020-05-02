@@ -12,6 +12,7 @@ html, body {
 canvas {
   margin: auto;
   display: block;
+  image-rendering: pixelated;
 }
 
 footer {

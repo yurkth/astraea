@@ -1,8 +1,5 @@
 const size = 64
-const pw = size * 3
-const ph = size * 3.5
 let px
-let scaling
 let p8Pal
 let p8Font
 
@@ -18,12 +15,18 @@ function preload() {
 }
 
 function setup() {
-  const minScale = 2
-  scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
-  const canvas = createCanvas(pw * scaling, ph * scaling)
-  canvas.parent("canvas")
-  px = createGraphics(pw, ph)
-  noSmooth()
+  {
+    const pw = size * 3
+    const ph = size * 3.5
+    const minScale = 2
+    const scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
+    const canvas = createCanvas(pw, ph)
+    canvas.parent("canvas")
+    canvas.elt.style.cssText += `width: ${width * scaling}px; height: ${height * scaling}px;`
+  }
+  textFont(p8Font, 5)
+  textAlign(CENTER, TOP)
+  setPalette()
 
   // palette = [
   //   color("#19254f"),
@@ -42,13 +45,8 @@ function setup() {
   //   color("#e0c267"),
   // ]
 
-  setPalette()
-  px.noStroke()
-  px.textFont(p8Font, 5)
-  px.textAlign(CENTER, TOP)
-
   const pdsObj = new PoissonDiskSampling({
-    shape: [pw, ph],
+    shape: [width, height],
     minDistance: 25,
     maxDistance: 50,
     tries: 20
@@ -65,8 +63,8 @@ function setup() {
       weight: [11, 1, 9]
     },
     lapTime: rng.random() + 1.5, // [1.5, 2.5)
-    planeOffset: [pw / 2 - size, 9],
-    sphereOffset: [pw / 2, size * 2.5]
+    planeOffset: [width / 2 - size, 9],
+    sphereOffset: [width / 2, size * 2.5]
   }))
   satellites.push(new Planet({ // cloud
     diameter: planets[0].diameter + 4,
@@ -93,8 +91,8 @@ function setup() {
 }
 
 function draw() {
-  px.background(p8Pal.darkBlue)
-  px.loadPixels()
+  background(p8Pal.darkBlue)
+  loadPixels()
   {
     for (let point of stars) {
       pSet(...point)
@@ -112,14 +110,11 @@ function draw() {
       s.draw(Properties.Draw.Front)
     }
   }
-  px.updatePixels()
+  updatePixels()
   {
-    textb("plane", pw / 2, 2)
-    textb("sphere", pw / 2, planets[0].grid.height + 11)
+    textb("plane", width / 2, 2)
+    textb("sphere", width / 2, planets[0].grid.height + 11)
   }
-
-  scale(scaling)
-  image(px, 0, 0)
 
   // print(`fps: ${Math.floor(frameRate())}`)
 }
