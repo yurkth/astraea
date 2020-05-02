@@ -52,11 +52,10 @@ function weightedChoice(array, weight, value = rng.random()) {
 }
 
 class Grid {
-  #table
   constructor(width, height, init) {
     this.width = width
     this.height = height
-    this.#table = new Array(this.width * this.height).fill(init)
+    this.table = new Array(this.width * this.height).fill(init)
   }
 
   set(x, y, val) {
@@ -65,7 +64,7 @@ class Grid {
     } else if (y < 0 || this.height <= y) {
       throw new RangeError(`The argument must be between y ${0} and ${this.height - 1}.`)
     } else {
-      this.#table[y * this.width + x] = val
+      this.table[y * this.width + x] = val
     }
   }
 
@@ -76,32 +75,30 @@ class Grid {
     if (y < 0 || this.height <= y) {
       y = mod(y, this.height)
     }
-    return this.#table[y * this.width + x]
+    return this.table[y * this.width + x]
   }
 }
 
 class Random {
-  #rng
   constructor(seed) {
     this.seed = init(seed, Math.random())
-    this.#rng = new alea(this.seed)
+    this.rng = new alea(this.seed)
   }
 
-  random() { return this.#rng() } // [0, 1)
+  random() { return this.rng() } // [0, 1)
 
   randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
 }
 
 class NoiseGenerator {
-  #simplex
   constructor(seed) {
     this.seed = init(seed, Math.random())
-    this.#simplex = new SimplexNoise(new alea(this.seed))
+    this.simplex = new SimplexNoise(new alea(this.seed))
   }
 
-  _noise3D(x, y, z, noiseScale = 1) { return this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale) * 0.5 + 0.5 } // [0, 1]
+  _noise3D(x, y, z, noiseScale = 1) { return this.simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale) * 0.5 + 0.5 } // [0, 1]
 
-  _ridged(x, y, z, noiseScale = 1) { return Math.abs(this.#simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale)) } // [0, 1]
+  _ridged(x, y, z, noiseScale = 1) { return Math.abs(this.simplex.noise3D(x * noiseScale, y * noiseScale, z * noiseScale)) } // [0, 1]
 
   _fbm(func, x, y, z, octaves = 6) {
     let result = 0
@@ -132,14 +129,14 @@ const rng = new Random(0)
 console.log(`seed: ${rng.seed}`)
 
 class PixelSphere {
-  #sphereWidth = []
   constructor(diameter) {
     this.diameter = diameter
+    this.sphereWidth = []
     this._setSphereWidth()
   }
 
   get _sphereWidth() {
-    return this.#sphereWidth
+    return this.sphereWidth
   }
 
   _setSphereWidth() {
@@ -155,8 +152,8 @@ class PixelSphere {
       r = d
       if (r > y || d > x) {
         const w = x * 2 + 1 + parity
-        this.#sphereWidth[y + i] = w
-        this.#sphereWidth[this.diameter - y - i - 1] = w
+        this.sphereWidth[y + i] = w
+        this.sphereWidth[this.diameter - y - i - 1] = w
         d += ++y * 2 + 1
       }
       if (r <= x) {
@@ -288,12 +285,12 @@ class Satellite extends PixelSphere {
   }
 }
 
-class Properties {
-  static Draw = {
+Properties = {
+  Draw: {
     Front: false,
     Back: true
-  }
-  static Noise = {
+  },
+  Noise: {
     Simplex: 0,
     Ridged: 1,
     DomainWarping: 2,
