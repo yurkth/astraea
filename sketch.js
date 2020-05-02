@@ -1,13 +1,9 @@
-const size = 64
-let px
-let p8Pal
 let p8Font
+let palette
 
 let stars
 let planets = []
 let satellites = []
-
-// let palette
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
@@ -15,6 +11,7 @@ function preload() {
 }
 
 function setup() {
+  const size = 64
   {
     const pw = size * 3
     const ph = size * 3.5
@@ -26,24 +23,67 @@ function setup() {
   }
   textFont(p8Font, 5)
   textAlign(CENTER, TOP)
-  setPalette()
 
-  // palette = [
-  //   color("#19254f"),
-  //   color("#f3f1e3"),
-  //   color("#49608c"),
-  //   color("#169adb"),
-  //   color("#3bc2d1"),
-  //   color("#0b965a"),
-  //   color("#1bd15b"),
-  //   color("#8ed66f"),
-  //   color("#b03862"),
-  //   color("#e34451"),
-  //   color("#e37f78"),
-  //   color("#c27a1d"),
-  //   color("#eda72d"),
-  //   color("#e0c267"),
-  // ]
+  palette = {
+    background: color(29, 43, 83),
+    star: [
+      color(255, 241, 232),
+      color(95, 87, 79)
+    ],
+    // TODO: 下の色はランダムに決めるようにする
+    planet: [
+      color(41, 173, 255),
+      color(255, 204, 170),
+      color(0, 228, 54),
+      color(0)
+    ],
+    cloud: [
+      color(255, 241, 232),
+      color(194, 195, 199)
+    ],
+    satellite: [
+      color(255, 163, 0),
+      color(255, 236, 39)
+    ]
+  }
+
+  // noLoop()
+  const defaultOffset = [width / 2, size * 2.5]
+  planets.push(new Planet({ // main planet
+    diameter: size,
+    noiseMode: Properties.Noise.Simplex,
+    palette: {
+      colors: palette.planet,
+      weight: [11, 1, 9, 0]
+    },
+    lapTime: rng.random() + 3, // [3, 4)
+    planeOffset: [width / 2 - size, 9],
+    offset: defaultOffset
+  }))
+  planets.push(new Planet({ // cloud
+    diameter: size + 4,
+    noiseMode: Properties.Noise.Simplex,
+    palette: {
+      colors: [null, palette.cloud[0]],
+      weight: [3, 2],
+      backColor: palette.cloud[1]
+    },
+    lapTime: rng.random() + 5, // [5, 6)
+    offset: defaultOffset
+  }))
+
+  for (let i = rng.randint(1, 6); i > 0; i--) {
+    satellites.push(new Satellite({
+      diameter: rng.randint(2, size / 8),
+      color: weightedChoice(palette.satellite, [1, 1]),
+      speed: rng.random() + 0.5, // [3sec, 9sec)
+      a: rng.randint(size * 3 / 4, size),
+      b: rng.randint(size / 8, size / 4),
+      initAngle: rng.randint(0, 360),
+      rotate: rng.randint(-90, 90),
+      offset: defaultOffset
+    }))
+  }
 
   const pdsObj = new PoissonDiskSampling({
     shape: [width, height],
@@ -51,47 +91,11 @@ function setup() {
     maxDistance: 50,
     tries: 20
   }, rng.random.bind(rng))
-  starPalette = [[p8Pal.white, p8Pal.darkGray], [2, 5]]
-  stars = pdsObj.fill().map(val => [...val, weightedChoice(...starPalette)])
-
-  // noLoop()
-  planets.push(new Planet({
-    diameter: size,
-    noiseMode: Properties.Noise.Simplex,
-    palette: {
-      colors: [p8Pal.blue, p8Pal.peach, p8Pal.green],
-      weight: [11, 1, 9]
-    },
-    lapTime: rng.random() + 1.5, // [1.5, 2.5)
-    planeOffset: [width / 2 - size, 9],
-    sphereOffset: [width / 2, size * 2.5]
-  }))
-  satellites.push(new Planet({ // cloud
-    diameter: planets[0].diameter + 4,
-    noiseMode: Properties.Noise.Simplex,
-    palette: {
-      colors: [color(0, 0, 0, 0), p8Pal.white],
-      weight: [3, 2]
-    },
-    lapTime: planets[0].lapTime * 1.8,
-    sphereOffset: planets[0].sphereOffset
-  }))
-  for (let i = rng.randint(1, 6); i > 0; i--) {
-    satellites.push(new Satellite({
-      diameter: rng.randint(1, size / 8),
-      color: p8Pal.orange,
-      speed: rng.random() + 0.5, // [3sec, 9sec)
-      a: rng.randint(planets[0].diameter * 3 / 4, planets[0].diameter),
-      b: rng.randint(planets[0].diameter / 8, planets[0].diameter / 4),
-      initAngle: rng.randint(0, 360),
-      rotate: rng.randint(-90, 90),
-      offset: planets[0].sphereOffset
-    }))
-  }
+  stars = pdsObj.fill().map(val => [...val, weightedChoice(palette.star, [2, 5])])
 }
 
 function draw() {
-  background(p8Pal.darkBlue)
+  background(palette.background)
   loadPixels()
   {
     for (let point of stars) {
@@ -100,14 +104,19 @@ function draw() {
 
     planets[0].drawPlane(0, 9)
 
-    for (let s of satellites) {
-      s.draw(Properties.Draw.Back)
+    for (let i = satellites.length - 1; i >= 0; i--) {
+      satellites[i].draw(Properties.Draw.Back)
     }
-    for (let p of planets) {
-      p.draw(Properties.Draw.Front)
+    for (let i = planets.length - 1; i >= 0; i--) {
+      if (planets[i].hasBack) {
+        planets[i].draw(Properties.Draw.Back)
+      }
     }
-    for (let s of satellites) {
-      s.draw(Properties.Draw.Front)
+    for (let i = 0; i < planets.length; i++) {
+      planets[i].draw(Properties.Draw.Front)
+    }
+    for (let i = 0; i < satellites.length; i++) {
+      satellites[i].draw(Properties.Draw.Front)
     }
   }
   updatePixels()

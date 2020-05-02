@@ -4,33 +4,12 @@ function mod(a, b) { return (a % b + b) % b }
 
 function init(arg, def) { return arg === undefined ? def : arg }
 
-function setPalette() {
-  p8Pal = {
-    black: color(0, 0, 0),
-    darkBlue: color(29, 43, 83),
-    darkPurple: color(126, 37, 83),
-    darkGreen: color(0, 135, 81),
-    brown: color(171, 82, 54),
-    darkGray: color(95, 87, 79),
-    lightGray: color(194, 195, 199),
-    white: color(255, 241, 232),
-    red: color(255, 0, 77),
-    orange: color(255, 163, 0),
-    yellow: color(255, 236, 39),
-    green: color(0, 228, 54),
-    blue: color(41, 173, 255),
-    indigo: color(131, 118, 156),
-    pink: color(255, 119, 168),
-    peach: color(255, 204, 170)
-  }
-}
-
 function pSet(x, y, c) {
-  if (alpha(c) === 0) { return }
+  if (c === null) { return }
   set(x, y, c)
 }
 
-function textb(str, x, y, border = p8Pal.white, body = p8Pal.black) {
+function textb(str, x, y, border = palette.star[0], body = palette.background) {
   fill(border)
   text(str, x - 1, y)
   text(str, x + 1, y)
@@ -40,15 +19,19 @@ function textb(str, x, y, border = p8Pal.white, body = p8Pal.black) {
   text(str, x, y)
 }
 
-function weightedChoice(array, weight, value = rng.random()) {
+function weightedChoiceIndex(length, weight, value = rng.random()) {
   const totalWeight = weight.reduce((sum, val) => sum += val, 0)
   let threshold = value * totalWeight
-  for (let i = 0; i < array.length; i++) {
+  for (let i = 0; i < length; i++) {
     if (threshold <= weight[i]) {
-      return array[i]
+      return i
     }
     threshold -= weight[i]
   }
+}
+
+function weightedChoice(array, weight, value = rng.random()) {
+  return array[weightedChoiceIndex(array.length, weight, value)]
 }
 
 class Grid {
@@ -168,9 +151,13 @@ class Planet extends PixelSphere {
     super(options.diameter)
     this.noiseMode = options.noiseMode
     this.palette = options.palette
+    if (this.palette.colors.length !== this.palette.weight.length) {
+      throw new Error("The colors and weight must be the same length.")
+    }
     this.lapTime = init(options.lapTime, 1) // sec
+    this.hasBack = this.palette.hasOwnProperty("backColor")
     this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
-    this.sphereOffset = init(options.sphereOffset, [0, 0]) // 基準点: 中心
+    this.offset = init(options.offset, [0, 0]) // 基準点: 中心
 
     this.noise = new NoiseGenerator(rng.random())
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
@@ -215,20 +202,7 @@ class Planet extends PixelSphere {
             break
         }
 
-        switch (3) {
-          case 1:
-            const hue = Math.floor(val * 360)
-            this.grid.set(x, y, color(`hsb(${hue}, 80%, 100%)`))
-            break
-          case 2:
-            const bright = Math.floor(val * 100)
-            this.grid.set(x, y, color(`hsb(0, 0%, ${bright}%)`))
-            break
-          case 3:
-            const col = weightedChoice(this.palette.colors, this.palette.weight, val)
-            this.grid.set(x, y, col)
-            break
-        }
+        this.grid.set(x, y, weightedChoiceIndex(this.palette.colors.length, this.palette.weight, val))
       }
     }
   }
@@ -237,7 +211,7 @@ class Planet extends PixelSphere {
     for (let x = 0; x < this.grid.width; x++) {
       const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
       for (let y = 0; y < this.grid.height; y++) {
-        pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.grid.get(gx, y))
+        pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.palette.colors[this.grid.get(gx, y)])
       }
     }
   }
@@ -247,8 +221,9 @@ class Planet extends PixelSphere {
       const sw = this._sphereWidth[y]
       for (let x = 0; x < sw; x++) {
         const gx = Math.floor((x / sw + (isBack ? 1 : 0)) * this.diameter - frameCount * this.speed)
-        const g = this.grid.get(gx, y)
-        pSet((isBack ? -1 : 1) * (x - sw / 2 + 0.5) + this.sphereOffset[0], y + this.sphereOffset[1] - this.diameter / 2, isBack ? alpha(g) === 0 ? color(0, 0, 0, 0) : p8Pal.lightGray : g)
+        const val = this.grid.get(gx, y)
+        const c = (isBack && val) ? this.palette.backColor : this.palette.colors[val]
+        pSet((isBack ? -1 : 1) * (x - sw / 2 + 0.5) + this.offset[0], y + this.offset[1] - this.diameter / 2, c)
       }
     }
   }
@@ -259,7 +234,7 @@ class Satellite extends PixelSphere {
     super(options.diameter)
     this.color = options.color
     this.speed = init(options.speed, 1)
-    this.a = init(options.a, size * 2 / 3) // 横
+    this.a = init(options.a, width / 3) // 横
     this.b = init(options.b, 0) // 縦
     this.initAngle = init(options.initAngle, 0)
     const rotate = init(options.rotate, 0) % 360 * Math.PI / 180 // -90~90
