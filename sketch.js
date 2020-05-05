@@ -5,6 +5,10 @@ let stars
 let planets = []
 let satellites = []
 
+const rng = new Random()
+console.log(`seed: ${rng.seed}`)
+const documentHeight = document.getElementsByTagName("body")[0].clientHeight
+
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
   p8Font = loadFont("PICO-8_mono_upper.ttf")
@@ -16,7 +20,7 @@ function setup() {
     const pw = size * 3
     const ph = size * 3.5
     const minScale = 2
-    const scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - 485) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
+    const scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - documentHeight) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
     const canvas = createCanvas(pw, ph)
     canvas.parent("canvas")
     canvas.elt.style.cssText += `width: ${width * scaling}px; height: ${height * scaling}px;`
@@ -24,38 +28,13 @@ function setup() {
   textFont(p8Font, 5)
   textAlign(CENTER, TOP)
 
-  palette = {
-    background: color(29, 43, 83),
-    star: [
-      color(255, 241, 232),
-      color(95, 87, 79)
-    ],
-    // TODO: 下の色はランダムに決めるようにする
-    planet: [
-      color(41, 173, 255),
-      color(255, 204, 170),
-      color(0, 228, 54),
-      color(0)
-    ],
-    cloud: [
-      color(255, 241, 232),
-      color(194, 195, 199)
-    ],
-    satellite: [
-      color(255, 163, 0),
-      color(255, 236, 39)
-    ]
-  }
+  palette = new Palette(Properties.Color.Complementary)
 
-  // noLoop()
   const defaultOffset = [width / 2, size * 2.5]
   planets.push(new Planet({ // main planet
     diameter: size,
-    noiseMode: Properties.Noise.Simplex,
-    palette: {
-      colors: palette.planet,
-      weight: [11, 1, 9, 0]
-    },
+    noiseMode: Properties.Noise.Gradation,
+    palette: palette.planet,
     lapTime: rng.random() + 3, // [3, 4)
     planeOffset: [width / 2 - size, 9],
     offset: defaultOffset
@@ -63,11 +42,9 @@ function setup() {
   planets.push(new Planet({ // cloud
     diameter: size + 4,
     noiseMode: Properties.Noise.Simplex,
-    palette: {
-      colors: [null, palette.cloud[0]],
-      weight: [3, 2],
-      backColor: palette.cloud[1]
-    },
+    palette: [null, palette.cloud[0]],
+    weight: [3, 2],
+    backColor: palette.cloud[1],
     lapTime: rng.random() + 5, // [5, 6)
     offset: defaultOffset
   }))
@@ -108,9 +85,7 @@ function draw() {
       satellites[i].draw(Properties.Draw.Back)
     }
     for (let i = planets.length - 1; i >= 0; i--) {
-      if (planets[i].hasBack) {
-        planets[i].draw(Properties.Draw.Back)
-      }
+      planets[i].draw(Properties.Draw.Back)
     }
     for (let i = 0; i < planets.length; i++) {
       planets[i].draw(Properties.Draw.Front)
