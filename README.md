@@ -17,7 +17,7 @@ pixel-sphere is licensed under the MIT license. See the [LICENSE](https://github
 
 ### Assets
 
-- The [PICO-8 palette](https://www.lexaloffle.com/pico-8.php?page=faq) is licensed under the CC-0 license.
+- The [Corpora](https://github.com/dariusk/corpora) is licensed under the CC-0 license.
 - The [PICO-8 font](https://www.lexaloffle.com/bbs/?tid=3760) (unofficial) does not claim any copyright.
   - The [official font](https://www.lexaloffle.com/pico-8.php?page=faq) is also licensed under the CC-0 license.
 
