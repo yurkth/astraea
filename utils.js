@@ -1,5 +1,28 @@
 const PI2 = Math.PI * 2
 
+const Properties = {
+  Draw: {
+    Front: false,
+    Back: true
+  },
+  Noise: {
+    Simplex: 0,
+    Ridged: 1,
+    DomainWarping: 2,
+    VStripe: 3,
+    HStripe: 4,
+    Gradation: 5
+  },
+  Color: {
+    Analogous: 0,
+    Complementary: 1,
+    SplitComplementary: 2,
+    Triad: 3,
+    Cavity: 4,
+    Earth: 5
+  }
+}
+
 function mod(a, b) { return (a % b + b) % b }
 
 function init(arg, def) { return arg === undefined ? def : arg }
@@ -196,185 +219,5 @@ class Palette {
            ${rng.randint(-prop.s.range / 2, prop.s.range / 2) + prop.s.offset}%,
            ${rng.randint(-prop.b.range / 2, prop.b.range / 2) + prop.b.offset}%)`
     )
-  }
-}
-
-class PixelSphere {
-  constructor(diameter) {
-    this.diameter = diameter
-    this.sphereWidth = []
-    this._setSphereWidth()
-  }
-
-  get _sphereWidth() {
-    return this.sphereWidth
-  }
-
-  _setSphereWidth() {
-    // Reference: https://github.com/nesbox/TIC-80/blob/master/src/tic.c#L948-L961
-    const parity = 1 - this.diameter % 2
-    let r = Math.floor(this.diameter / 2) - parity
-    let y = -r
-    let x = 0
-    let d = 2 - 2 * r
-    const i = r
-
-    do {
-      r = d
-      if (r > y || d > x) {
-        const w = x * 2 + 1 + parity
-        this.sphereWidth[y + i] = w
-        this.sphereWidth[this.diameter - y - i - 1] = w
-        d += ++y * 2 + 1
-      }
-      if (r <= x) {
-        d += ++x * 2 + 1
-      }
-    } while (y <= 0)
-  }
-}
-
-class Planet extends PixelSphere {
-  constructor(options) {
-    super(options.diameter)
-    this.noiseMode = options.noiseMode
-    this.palette = options.palette
-    this.weight = options.weight
-    this.lapTime = init(options.lapTime, 1) // sec
-    this.backColor = init(options.backColor, null)
-    // this.planeOffset = [0, 0] // 基準点: 右上
-    this.offset = [width / 2, height / 2] // 基準点: 中心
-
-    this.noise = new NoiseGenerator(rng.random())
-    this.grid = new Grid(this.diameter * 2, this.diameter, 0)
-    this._setSphereNoise()
-    this.speed = this.diameter / 30 / this.lapTime
-    this.hasBack = this.backColor !== null
-  }
-
-  _convertVec3(x, y) {
-    const phi = x / this.grid.width * PI2
-    const theta = y / this.grid.height * Math.PI
-    const nx = Math.sin(theta) * Math.cos(phi) + 1
-    const ny = Math.sin(theta) * Math.sin(phi) + 1
-    const nz = Math.cos(theta) + 1
-    return [nx, ny, nz]
-  }
-
-  _setSphereNoise() {
-    for (let x = 0; x < this.grid.width; x++) {
-      for (let y = 0; y < this.grid.height; y++) {
-        let off, val, weight
-        switch (this.noiseMode) {
-          case Properties.Noise.Simplex:
-            val = this.noise.simplexFbm(...this._convertVec3(x, y))
-            weight = [8, 6, 11]
-            break
-          case Properties.Noise.Ridged:
-            val = this.noise.ridgedFbm(...this._convertVec3(x, y))
-            weight = [2, 1, 1]
-            break
-          case Properties.Noise.DomainWarping:
-            val = this.noise.domainWarping(...this._convertVec3(x, y))
-            weight = [8, 6, 11]
-            break
-          case Properties.Noise.VStripe:
-            off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = (Math.cos((4 * x / this.grid.width + off) * this.diameter / 32 * PI2) + 1) * 0.5
-            weight = [2, 3, 2]
-            break
-          case Properties.Noise.HStripe:
-            off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = (Math.cos((4 * y / this.grid.height + off) * this.diameter / 32 * PI2) + 1) * 0.5
-            weight = [1, 2, 1]
-            break
-          case Properties.Noise.Gradation:
-            off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = (y + off * 20) / (this.grid.height + 20)
-            weight = [2, 1, 2]
-            break
-        }
-
-        this.grid.set(x, y, weightedChoiceIndex(this.palette.length, init(this.weight, weight), val))
-      }
-    }
-  }
-
-  // drawPlane() {
-  //   for (let x = 0; x < this.grid.width; x++) {
-  //     const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
-  //     for (let y = 0; y < this.grid.height; y++) {
-  //       pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.palette[this.grid.get(gx, y)])
-  //     }
-  //   }
-  // }
-
-  draw(isBack) {
-    if (isBack && !this.hasBack) { return }
-    for (let y = 0; y < this.diameter; y++) {
-      const sw = this._sphereWidth[y]
-      for (let x = 0; x < sw; x++) {
-        const gx = Math.floor((x / sw + (isBack ? 1 : 0)) * this.diameter - frameCount * this.speed)
-        let c = this.palette[this.grid.get(gx, y)]
-        if (isBack && c !== null) {
-          c = this.backColor
-        }
-        pSet((isBack ? -1 : 1) * (x - sw / 2 + 0.5) + this.offset[0], y + this.offset[1] - this.diameter / 2, c)
-      }
-    }
-  }
-}
-
-class Satellite extends PixelSphere {
-  constructor(options) {
-    super(options.diameter)
-    this.color = options.color
-    this.speed = init(options.speed, 1)
-    this.a = init(options.a, width / 3) // 横
-    this.b = init(options.b, 0) // 縦
-    this.initAngle = init(options.initAngle, 0)
-    const rotate = init(options.rotate, 0) % 360 * Math.PI / 180 // -90~90
-    this.offset = [width / 2, height / 2] // 基準点: 中心
-
-    this.s = Math.sin(rotate)
-    this.c = Math.cos(rotate)
-  }
-
-  draw(isBack) {
-    const rad = (-frameCount - this.initAngle) * this.speed % 360 * Math.PI / 180
-    if (isBack ^ (Math.abs(rad) < Math.PI)) { return }
-    const ex = this.a * Math.cos(rad)
-    const ey = this.b * Math.sin(rad)
-    const px = ex * this.c - ey * this.s
-    const py = ex * this.s + ey * this.c
-    for (let y = 0; y < this.diameter; y++) {
-      const sw = this._sphereWidth[y]
-      for (let x = 0; x < sw; x++) {
-        pSet(px + x + this.offset[0] - sw / 2 + 0.5, py + y + this.offset[1] - this.diameter / 2, this.color)
-      }
-    }
-  }
-}
-
-Properties = {
-  Draw: {
-    Front: false,
-    Back: true
-  },
-  Noise: {
-    Simplex: 0,
-    Ridged: 1,
-    DomainWarping: 2,
-    VStripe: 3,
-    HStripe: 4,
-    Gradation: 5
-  },
-  Color: {
-    Analogous: 0,
-    Complementary: 1,
-    SplitComplementary: 2,
-    Triad: 3,
-    Cavity: 4,
-    Earth: 5
   }
 }
