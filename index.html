@@ -29,6 +29,14 @@
       <p>
         description
       </p>
+      <form class="field has-addons has-addons-centered" onsubmit="explore();return false;">
+        <div class="control">
+          <input class="input is-rounded" type="text" id="seed" placeholder="unknown planet" maxlength="16" pattern="^[\w ]+$">
+        </div>
+        <div class="control">
+          <a class="button is-dark is-outlined is-rounded" onclick="explore()">Explore</a>
+        </div>
+      </form>
       <a href="https://github.com/yurkth/pixel-sphere" target="_blank"
         class="button is-dark is-outlined  is-rounded">View GitHub</a>
     </div>

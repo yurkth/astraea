@@ -3,10 +3,12 @@ html, body {
   padding: 0;
 }
 
-.button {
-  margin-top: 10px;
-  margin-left: 5px;
-  margin-right: 5px;
+.container>.field {
+  margin-top: 12px;
+}
+
+input {
+  text-transform: uppercase;
 }
 
 canvas {

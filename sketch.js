@@ -1,12 +1,21 @@
 let p8Font
-let palette
 
-let stars
-let planets = []
-let satellites = []
-
-const rng = new Random()
+let rng
 const documentHeight = document.getElementsByTagName("body")[0].clientHeight
+const inputSeed = document.getElementById("seed")
+
+let palette
+let planets
+let satellites
+let stars
+
+function explore() {
+  const seed = (inputSeed.value || "default").replace(/[^\w ]/g, "?").toUpperCase()
+  inputSeed.value = ""
+  print(seed)
+  rng = new Random(seed)
+  generate()
+}
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
@@ -27,13 +36,17 @@ function setup() {
   textFont(p8Font, 5)
   textAlign(CENTER, TOP)
 
+  explore()
+}
+
+function generate() {
   const size = Math.max(rng.randint(32, 64), rng.randint(32, 64))
 
   palette = new Palette(
     weightedChoice(
       [Properties.Color.Analogous, Properties.Color.Complementary, Properties.Color.SplitComplementary,
       Properties.Color.Triad, Properties.Color.Cavity, Properties.Color.Earth],
-      [12, 8, 8, 8, 1, 3]
+      [15, 10, 6, 4, 1, 6]
     )
   )
   const isCavity = palette.mode === Properties.Color.Cavity
@@ -50,6 +63,7 @@ function setup() {
   )
   const isGradation = noiseMode === Properties.Noise.Gradation
 
+  planets = []
   planets.push(new Planet({ // main planet
     diameter: size,
     noiseMode: noiseMode,
@@ -70,6 +84,7 @@ function setup() {
     }))
   }
 
+  satellites = []
   const hasRing = weightedChoice([true, false], [1, 5])
   for (let i = hasRing ? rng.uniform(2, 4) * size : rng.randint(1, 6); i > 0; i--) {
     satellites.push(new Satellite({
