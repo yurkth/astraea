@@ -5,7 +5,7 @@ function mod(a, b) { return (a % b + b) % b }
 function init(arg, def) { return arg === undefined ? def : arg }
 
 function pSet(x, y, c) {
-  if (c === null) { return }
+  if (c === null || (x < 0 || width <= x) || (y < 0 || height <= y)) { return }
   set(x, y, c)
 }
 
@@ -70,7 +70,9 @@ class Random {
 
   random() { return this.rng() } // [0, 1)
 
-  randint(min, max) { return Math.floor(this.random() * (max - min)) + min } // [min, max)
+  randint(min, max) { return Math.floor(this.random() * (max - min) + min) } // [min, max)
+
+  uniform(min, max) { return this.random() * (max - min) + min }
 }
 
 class NoiseGenerator {
@@ -110,6 +112,7 @@ class NoiseGenerator {
 
 class Palette {
   constructor(mode) {
+    this.mode = mode
     this.h = rng.randint(0, 360)
 
     this.background = this.parseColor(
@@ -166,7 +169,7 @@ class Palette {
         break
       case Properties.Color.Earth:
         this.planet = [
-          { h: { offset: 215, range: 10 }, s: { offset: 60, range: 10 }, b: { offset: 85, range: 10 } },
+          { h: { offset: 210, range: 10 }, s: { offset: 60, range: 10 }, b: { offset: 85, range: 10 } },
           { h: { offset: 200, range: 10 }, s: { offset: 60, range: 10 }, b: { offset: 85, range: 10 } },
           { h: { offset: 135, range: 10 }, s: { offset: 70, range: 10 }, b: { offset: 90, range: 10 } }
         ].map(prop => this.parseColor(prop))
@@ -239,8 +242,8 @@ class Planet extends PixelSphere {
     this.weight = options.weight
     this.lapTime = init(options.lapTime, 1) // sec
     this.backColor = init(options.backColor, null)
-    this.planeOffset = init(options.planeOffset, [0, 0]) // 基準点: 右上
-    this.offset = init(options.offset, [0, 0]) // 基準点: 中心
+    // this.planeOffset = [0, 0] // 基準点: 右上
+    this.offset = [width / 2, height / 2] // 基準点: 中心
 
     this.noise = new NoiseGenerator(rng.random())
     this.grid = new Grid(this.diameter * 2, this.diameter, 0)
@@ -275,24 +278,20 @@ class Planet extends PixelSphere {
             val = this.noise.domainWarping(...this._convertVec3(x, y))
             weight = [8, 6, 11]
             break
-          case Properties.Noise.HStripe:
-            off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = (Math.cos((4 * y / this.grid.height + off) * 2 * PI2) + 1) * 0.5
-            weight = [1, 2, 1]
-            break
           case Properties.Noise.VStripe:
             off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = (Math.cos((4 * x / this.grid.width + off) * 2 * PI2) + 1) * 0.5
+            val = (Math.cos((4 * x / this.grid.width + off) * this.diameter / 32 * PI2) + 1) * 0.5
             weight = [2, 3, 2]
+            break
+          case Properties.Noise.HStripe:
+            off = this.noise.simplexFbm(...this._convertVec3(x, y))
+            val = (Math.cos((4 * y / this.grid.height + off) * this.diameter / 32 * PI2) + 1) * 0.5
+            weight = [1, 2, 1]
             break
           case Properties.Noise.Gradation:
             off = this.noise.simplexFbm(...this._convertVec3(x, y))
-            val = map(y + off * 10, -10, this.grid.height + 10, 0, 1)
+            val = (y + off * 20) / (this.grid.height + 20)
             weight = [2, 1, 2]
-            break
-          case Properties.Noise.Mono:
-            val = 0
-            weight = [0, 1, 0]
             break
         }
 
@@ -301,14 +300,14 @@ class Planet extends PixelSphere {
     }
   }
 
-  drawPlane() {
-    for (let x = 0; x < this.grid.width; x++) {
-      const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
-      for (let y = 0; y < this.grid.height; y++) {
-        pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.palette[this.grid.get(gx, y)])
-      }
-    }
-  }
+  // drawPlane() {
+  //   for (let x = 0; x < this.grid.width; x++) {
+  //     const gx = Math.floor(x + (this.grid.width * 3 / 4) - frameCount * this.speed) // (this.grid.width * 3 / 4) は回転の位置合わせだから消しても大丈夫
+  //     for (let y = 0; y < this.grid.height; y++) {
+  //       pSet(x + this.planeOffset[0], y + this.planeOffset[1], this.palette[this.grid.get(gx, y)])
+  //     }
+  //   }
+  // }
 
   draw(isBack) {
     if (isBack && !this.hasBack) { return }
@@ -335,7 +334,7 @@ class Satellite extends PixelSphere {
     this.b = init(options.b, 0) // 縦
     this.initAngle = init(options.initAngle, 0)
     const rotate = init(options.rotate, 0) % 360 * Math.PI / 180 // -90~90
-    this.offset = init(options.offset, [0, 0]) // 基準点: 中心
+    this.offset = [width / 2, height / 2] // 基準点: 中心
 
     this.s = Math.sin(rotate)
     this.c = Math.cos(rotate)
@@ -368,8 +367,7 @@ Properties = {
     DomainWarping: 2,
     VStripe: 3,
     HStripe: 4,
-    Gradation: 5,
-    Mono: 6
+    Gradation: 5
   },
   Color: {
     Analogous: 0,
