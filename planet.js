@@ -317,6 +317,8 @@ class Template {
     stars = pdsObj.fill().map(val => [...val, weightedChoice([...palette.star, null], [3, 6, 2])])
   }
 
+  static torin() { this.yurkth()}
+
   static yurkth() {
     const size = 48
 
@@ -346,6 +348,50 @@ class Template {
     for (let y = 0; y < planets[0].grid.height; y++) {
       for (let x = 0; x < planets[0].grid.width; x++) {
         planets[0].grid.set(x, y, tmp.get(Math.floor(x / 4), Math.floor(y / 4)))
+      }
+    }
+
+    satellites = []
+
+    const pdsObj = new PoissonDiskSampling({
+      shape: [width, height],
+      minDistance: 25,
+      maxDistance: 50,
+      tries: 20
+    }, rng.random.bind(rng))
+    stars = pdsObj.fill().map(val => [...val, weightedChoice([...palette.star, null], [3, 6, 2])])
+  }
+
+  static rainbow() {
+    const size = 48
+
+    palette = {
+      background: color("hsb(255,15%,15%)"),
+      planet: [
+        color("hsb(0,70%,90%)"),
+        color("hsb(45,70%,90%)"),
+        color("hsb(90,70%,90%)"),
+        color("hsb(135,70%,90%)"),
+        color("hsb(180,70%,90%)"),
+        color("hsb(225,70%,90%)"),
+        color("hsb(270,70%,90%)"),
+        color("hsb(315,70%,90%)"),
+      ],
+      star: [
+        color("hsb(255,10%,100%)"),
+        color("hsb(255,20%,40%)")
+      ]
+    }
+
+    planets = [new Planet({
+      diameter: size,
+      palette: palette.planet,
+      weight: [1, 1, 1, 1, 1, 1, 1, 1],
+      lapTime: 3,
+    })]
+    for (let y = 0; y < planets[0].grid.height; y++) {
+      for (let x = 0; x < planets[0].grid.width; x++) {
+        planets[0].grid.set(x, y, Math.floor(x / 12) % 8)
       }
     }
 
