@@ -3,7 +3,7 @@ const documentHeight = Array.from(document.getElementsByTagName("section")).redu
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
-  p8Font = loadFont("PICO-8_mono_upper.ttf")
+  p8Font = loadFont("assets/font/PICO-8_mono_upper.ttf")
 }
 
 function setup() {
