@@ -11,6 +11,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
   <script
     src="https://cdn.jsdelivr.net/gh/kchapelier/poisson-disk-sampling@2.2.0/build/poisson-disk-sampling.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/zlibjs@0.3.1/bin/gzip.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/zlibjs@0.3.1/bin/gunzip.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -31,7 +33,8 @@
       </p>
       <form class="field has-addons has-addons-centered" onsubmit="explore();return false;">
         <div class="control">
-          <input class="input is-rounded" type="text" id="seed" placeholder="unknown planet" maxlength="16" pattern="^[\w ]+$">
+          <input class="input is-rounded" type="text" id="seed" placeholder="unknown planet" maxlength="16"
+            pattern="^[\w ]+$">
         </div>
         <div class="control">
           <a class="button is-dark is-outlined is-rounded" onclick="explore()">Explore</a>
