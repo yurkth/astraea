@@ -1,5 +1,5 @@
 let p8Font
-const documentHeight = document.getElementsByTagName("body")[0].clientHeight
+const documentHeight = Array.from(document.getElementsByTagName("section")).reduce((h, v) => h + v.clientHeight, 0)
 
 function preload() {
   // https://www.lexaloffle.com/bbs/?tid=3760
@@ -10,7 +10,8 @@ function setup() {
   const pw = 192
   const ph = 144
   const minScale = 2
-  const scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - documentHeight) / ph), minScale)) // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
+  // 最低倍率をminScale倍として、スクロールしないで画面に収まる最大倍率 
+  const scaling = Math.floor(Math.max(Math.min(windowWidth / pw, (windowHeight - documentHeight) / ph), minScale))
   const canvas = createCanvas(pw, ph)
   pixelDensity(1) // for smartphone
   canvas.parent("canvas")

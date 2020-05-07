@@ -1,6 +1,6 @@
-# pixel-sphere
+# Astraea
 
-description
+The planet generator inspired by [Planetarium](https://managore.itch.io/planetarium).
 
 ![]()
 
@@ -14,6 +14,7 @@ pixel-sphere is licensed under the MIT license. See the [LICENSE](https://github
 - [seedrandom](https://github.com/davidbau/seedrandom) is licensed under the MIT license.
 - [simplex-noise](https://github.com/jwagner/simplex-noise.js) is licensed under the MIT license.
 - [poisson-disk-sampling](https://github.com/kchapelier/poisson-disk-sampling) is licensed under the MIT license.
+- [zlib.js](https://github.com/imaya/zlib.js) is licensed under the MIT license.
 
 ### Assets
 

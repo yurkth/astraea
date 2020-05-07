@@ -317,7 +317,7 @@ class Template {
     stars = pdsObj.fill().map(val => [...val, weightedChoice([...palette.star, null], [3, 6, 2])])
   }
 
-  static torin() { this.yurkth()}
+  static torin() { this.yurkth() }
 
   static yurkth() {
     const size = 48
