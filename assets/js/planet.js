@@ -97,7 +97,7 @@ class PixelSphere {
   }
 
   _setSphereWidth() {
-    // Reference: https://github.com/nesbox/TIC-80/blob/master/src/tic.c#L948-L961
+    // Reference: https://github.com/nesbox/TIC-80/blob/813a46bd2ac02f7d28fff57200b715719be60712/src/tic.c#L940-L953
     const parity = 1 - this.diameter % 2
     let r = Math.floor(this.diameter / 2) - parity
     let y = -r
