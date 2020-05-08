@@ -6,7 +6,7 @@ The planet generator inspired by [Planetarium](https://managore.itch.io/planetar
 
 ## License
 
-pixel-sphere is licensed under the MIT license. See the [LICENSE](https://github.com/yurkth/pixel-sphere/blob/master/LICENSE) for more information.
+Astraea is licensed under the MIT license. See the [LICENSE](https://github.com/yurkth/astraea/blob/master/LICENSE) for more information.
 
 ### Libraries
 
