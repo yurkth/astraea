@@ -265,7 +265,7 @@ class Template {
         color("hsb(210,65%,85%)"),
         color("hsb(200,70%,85%)"),
         color("hsb(135,80%,90%)"),
-        color("hsb(190,40%,95%)")
+        color("hsb(190,20%,100%)")
       ],
       cloud: [
         color("hsb(0,2%,98%)"),
@@ -396,6 +396,70 @@ class Template {
     }
 
     satellites = []
+
+    const pdsObj = new PoissonDiskSampling({
+      shape: [width, height],
+      minDistance: 25,
+      maxDistance: 50,
+      tries: 20
+    }, rng.random.bind(rng))
+    stars = pdsObj.fill().map(val => [...val, weightedChoice([...palette.star, null], [3, 6, 2])])
+  }
+
+  static pico8() {
+    const size = 48
+
+    palette = {
+      background: color(29, 43, 83),
+      planet: [
+        color(41, 173, 255),
+        color(255, 204, 170),
+        color(0, 228, 54),
+      ],
+      cloud: [
+        color(255, 241, 232),
+        color(194, 195, 199)
+      ],
+      satellite: [
+        color(255, 163, 0),
+        color(255, 236, 39)
+      ],
+      star: [
+        color(255, 241, 232),
+        color(95, 87, 79)
+      ]
+    }
+
+    planets = [
+      new Planet({ // main planet
+        diameter: size,
+        noiseMode: Properties.Noise.Simplex,
+        palette: palette.planet,
+        weight: [8, 1, 6],
+        lapTime: 3,
+      }),
+      new Planet({ // cloud
+        diameter: size + 4,
+        noiseMode: Properties.Noise.DomainWarping,
+        palette: [palette.cloud[0], null, palette.cloud[0]],
+        weight: [2, 3, 3],
+        backColor: palette.cloud[1],
+        lapTime: 5
+      })
+    ]
+
+    satellites = []
+    for (let i = 0; i < 2; i++) {
+      satellites.push(new Satellite({
+        diameter: rng.randint(5, size / 8),
+        color: palette.satellite[i],
+        speed: rng.uniform(0.5, 1.5), // [3sec, 9sec)
+        a: rng.randint(size * 3 / 4, size),
+        b: rng.randint(size / 8, size / 4),
+        initAngle: rng.randint(0, 360),
+        rotate: rng.randint(-90, 90)
+      }))
+    }
 
     const pdsObj = new PoissonDiskSampling({
       shape: [width, height],
