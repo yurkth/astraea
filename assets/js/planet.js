@@ -7,7 +7,7 @@ let satellites
 let stars
 
 function explore() {
-  const seed = (inputSeed.value || randomWord()).replace(/[^\w ]/g, "?")
+  const seed = (inputSeed.value || randomWord()).replace(/ /g, "_").replace(/[^\w]/g, "?").toLowerCase()
   inputSeed.value = ""
   rng = new Random(seed.toUpperCase())
   if (seed in Template) {
