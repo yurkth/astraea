@@ -1,6 +1,6 @@
 # Astraea
 
-The planet generator inspired by [Planetarium](https://managore.itch.io/planetarium). Please see also [Twitter bot](https://twitter.com/astraea_yk).
+The planet generator inspired by [Planetarium](https://managore.itch.io/planetarium). Please see also the [Twitter bot](https://twitter.com/astraea_yk).
 
 ![](https://user-images.githubusercontent.com/59264002/81490997-a30c6d00-92c3-11ea-8263-d79388ff2dd6.png)
 
